@@ -48,7 +48,7 @@ void main() {
     );
 
     expect(find.byType(NavigationRail), findsOneWidget);
-    expect(find.byType(NavigationRailDestination), findsNWidgets(4));
+    expect(tester.widget<NavigationRail>(find.byType(NavigationRail)).destinations.length, 4);
     await tester.tap(find.byIcon(Icons.folder_outlined));
     expect(selected, 1);
   });
