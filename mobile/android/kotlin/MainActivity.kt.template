@@ -1,0 +1,94 @@
+package com.rhm.rhm_mobile
+
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
+
+class MainActivity : FlutterActivity() {
+    companion object {
+        private const val CHANNEL = "com.rhm.rhm_mobile/aps_runtime"
+    }
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "getStatus" -> result.success(RhmRuntimeService.getSnapshot(this))
+
+                    "startManager" -> {
+                        if (!hasNotificationPermission()) {
+                            result.error(
+                                "notifications_permission_required",
+                                "امنح RHM إذن الإشعارات أولاً حتى تظهر حالة الخدمة.",
+                                null
+                            )
+                        } else {
+                            try {
+                                RhmRuntimeService.start(this)
+                                result.success(null)
+                            } catch (error: Exception) {
+                                result.error(
+                                    "service_start_failed",
+                                    error.message ?: "تعذر تشغيل خدمة مراقبة RHM.",
+                                    null
+                                )
+                            }
+                        }
+                    }
+
+                    "stopManager" -> {
+                        RhmRuntimeService.stop(this)
+                        result.success(null)
+                    }
+
+                    "setAutostartEnabled" -> {
+                        val enabled = call.arguments as? Boolean
+                        if (enabled == null) {
+                            result.error("invalid_argument", "قيمة التشغيل التلقائي غير صالحة.", null)
+                        } else if (enabled && !hasNotificationPermission()) {
+                            result.error(
+                                "notifications_permission_required",
+                                "امنح إذن الإشعارات قبل تفعيل التشغيل التلقائي.",
+                                null
+                            )
+                        } else {
+                            RhmRuntimeService.setAutostartEnabled(this, enabled)
+                            result.success(null)
+                        }
+                    }
+
+                    "openNotificationSettings" -> {
+                        try {
+                            val settingsIntent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                            startActivity(settingsIntent)
+                            result.success(null)
+                        } catch (_: Exception) {
+                            val fallback = Intent(
+                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                Uri.parse("package:$packageName")
+                            )
+                            startActivity(fallback)
+                            result.success(null)
+                        }
+                    }
+
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    private fun hasNotificationPermission(): Boolean {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+    }
+}

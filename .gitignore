@@ -1,0 +1,23 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Generated Flutter / Android outputs
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/build/
+**/coverage/
+**/android/.gradle/
+**/android/local.properties
+**/android/app/.cxx/
+
+# Signing material and local secrets
+*.jks
+*.keystore
+key.properties
+.env
+.env.*
