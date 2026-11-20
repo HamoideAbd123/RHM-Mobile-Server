@@ -9,12 +9,12 @@ Android integration workspace for the existing RHM mobile client and the future 
 - `.github/workflows/mobile-ci.yml`: runs Flutter tests and analysis, then builds an ARM64 debug APK for CI verification.
 - `docs/`: architecture, API boundary, release/signing constraints, roadmap and verified project status.
 
-The Flutter client is an interface to the existing RHM FastAPI backend. The Android host now contains an initial Kotlin foreground monitor, a persistent status notification, a loopback TCP probe, an explicit user start/stop control, and an opt-in boot preference. **It does not yet start, stop or supervise Python/Termux, does not verify authenticated FastAPI/database health, and does not guarantee permanent uptime.**
+The Flutter client is an interface to the existing RHM FastAPI backend. The Android host now contains a Kotlin foreground service, an opt-in boot receiver, a narrow Termux RUN_COMMAND bridge, authenticated FastAPI health monitoring, and bounded recovery of the existing RHM server supervisor. This integration is awaiting CI and physical Huawei device acceptance; it is not yet a proven always-on deployment.
 
 ## Existing architecture decision
 
 - Flutter remains the single mobile UI; no duplicate Android app is being created.
-- Kotlin/Android owns the initial foreground monitor, notification, status bridge and opt-in boot request. Python process supervision remains a later phase.
+- Kotlin/Android owns foreground lifecycle, notification, boot request, health monitoring and fixed Termux operations; the private RHM Python supervisor remains responsible for Uvicorn and Next.js process lifecycle.
 - The existing Python/FastAPI/Uvicorn backend remains the application server until an Android-compatible runtime is proven.
 - The backend, database, model-provider keys and private operational configuration stay in [the private RHM core repository](https://github.com/HamoideAbd123/rhm-personal-ai-core).
 
@@ -73,18 +73,27 @@ The imported app has an authenticated in-app update client that currently talks 
 - Android does not guarantee that a process or service runs forever. Foreground-service rules, user force-stop, battery policies, memory pressure and manufacturer-specific controls still apply.
 - The app's current backend and model generation are not offline. Local networking to loopback does not make a cloud model available without Internet.
 - The Python runtime and database strategy for a standalone Android installation are not selected. They must be proven on ARM64 with the real dependency set before implementation.
-- The Kotlin foreground monitor and opt-in boot receiver are an initial milestone only; they do not yet manage the Python server or Termux. No embedded Python runtime, verified target-device persistence test, or production-signed APK is included.
+- Kotlin now launches the existing RHM supervisor via a one-time configured Termux bridge and attempts bounded recovery when authenticated FastAPI health remains unavailable. Termux/Debian remains the runtime; Python is not embedded in the APK. No successful Huawei reboot/soak test or production-signed APK is included yet.
 - This repository has no `LICENSE` file yet. Do not assume that public visibility grants permission to reuse or redistribute the code; select a license deliberately before accepting external contributions.
 
 
-## Android local monitor (initial milestone)
+## Android runtime host (integration milestone)
 
-Open **لوحة تحكم RHM → مضيف Android المحلي** in the Android app. The user can start or stop the visible foreground monitor and explicitly opt into a boot-time start attempt. On Android 13+, notification permission must be granted.
+Open **إعدادات RHM → مضيف Android المحلي**. After one-time Termux configuration and permission grant, enable **تشغيل Backend بعد إقلاع الهاتف**. This starts the foreground manager immediately and stores the boot preference. On Android 13+, notification permission must be granted.
 
-The notification reports only whether TCP accepts a connection at `127.0.0.1:8000`. It does not claim that the FastAPI health route, bearer-token authentication, PostgreSQL, model provider, or agent is healthy. The boot option starts only this monitor, not Python or Termux.
+The notification reports the authenticated state of `GET /mobile/health` on `127.0.0.1:8000`. Missing or rejected credentials are reported separately and do not cause restart loops. When configured, the manager uses only fixed Termux actions (`start`, `stop`, `restart`, `status`) to launch the private core's existing `rhm.cli server-update supervise` command.
 
 The test APK is deliberately isolated under `com.rhm.rhm_mobile.debug`; it must not replace the existing `com.rhm.rhm_mobile` installation.
 
-Foreground-service type `specialUse` is the current candidate for this specific monitor. Reassess it against the real workload, target SDK and distribution channel before a production release:
+Foreground-service type `specialUse` is currently declared for this local runtime manager. Reassess it against the actual workload, target SDK and distribution channel before a production release:
 - [Foreground-service types](https://developer.android.com/develop/background-work/services/fgs/service-types)
 - [Android 15 behavior changes](https://developer.android.com/about/versions/15/behavior-changes-15)
+
+
+### Termux runtime setup and acceptance boundary
+
+The first-time setup is documented in [Termux integration](docs/TERMUX_INTEGRATION.md). It requires enabling Termux external commands and granting RHM the RUN_COMMAND permission once. Android then starts the foreground manager after boot when the owner-enabled preference is active. The existing private RHM supervisor manages FastAPI and Next.js; an existing PostgreSQL cluster may be started where Debian cluster tools support it.
+
+The manager checks authenticated FastAPI health every 20 seconds and requests a bounded supervisor restart after repeated failures. It does not treat a missing/invalid token as a server crash. The Next.js frontend starts only when its existing production build is present; do not build it on every boot.
+
+This code has not yet passed on-device Huawei Android 10 reboot, screen-off, server-crash, PostgreSQL preservation, or chat smoke tests. It is therefore an implementation under test, not a claim of proven persistent operation. See [Status](docs/STATUS.md) and [Roadmap](docs/ROADMAP.md).
