@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
 import 'api_client.dart';
+import 'android_runtime_screen.dart';
 import 'notifications_screen.dart';
 import 'mcp_screen.dart';
 import 'server_update_screen.dart';
@@ -414,6 +416,13 @@ class _RhmControlCenterScreenState extends State<RhmControlCenterScreen> {
                       style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                     ),
                   ),
+                  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
+                    _module(
+                      icon: Icons.dns_outlined,
+                      title: 'مضيف Android المحلي',
+                      subtitle: 'مراقبة منفذ RHM وخيار التشغيل بعد الإقلاع',
+                      onTap: () => _open(const RhmAndroidRuntimeScreen()),
+                    ),
                   _module(
                     icon: Icons.smart_toy_outlined,
                     title: 'وكيل RHM',

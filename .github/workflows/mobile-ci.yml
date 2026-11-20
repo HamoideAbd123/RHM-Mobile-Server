@@ -62,6 +62,14 @@ jobs:
         working-directory: mobile/build/rhm_mobile
         run: flutter build apk --debug --target-platform android-arm64
 
+      - name: Verify debug APK package identity
+        working-directory: mobile/build/rhm_mobile
+        run: |
+          APK="build/app/outputs/flutter-apk/app-debug.apk"
+          AAPT="$(find "${ANDROID_HOME}/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          test -n "${AAPT}"
+          "${AAPT}" dump badging "${APK}" | grep -F "package: name='com.rhm.rhm_mobile.debug'"
+
       - name: Upload test APK
         uses: actions/upload-artifact@v4
         with:

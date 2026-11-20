@@ -1,0 +1,40 @@
+package com.rhm.rhm_mobile
+
+import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+
+class RhmBootReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent?) {
+        if (intent?.action != Intent.ACTION_BOOT_COMPLETED) return
+
+        val prefs = context.getSharedPreferences(
+            "rhm_android_runtime",
+            Context.MODE_PRIVATE
+        )
+        if (!prefs.getBoolean("autostart_after_boot", false)) return
+
+        val notificationPermissionGranted =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+                PackageManager.PERMISSION_GRANTED
+
+        if (!notificationPermissionGranted) {
+            prefs.edit()
+                .putString("last_monitor_error", "notification_permission_required")
+                .apply()
+            return
+        }
+
+        try {
+            RhmRuntimeService.start(context)
+        } catch (error: Exception) {
+            prefs.edit()
+                .putString("last_monitor_error", error.message ?: "boot_start_failed")
+                .apply()
+        }
+    }
+}
