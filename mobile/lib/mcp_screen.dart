@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:material_ui/material_ui.dart';
 
 import 'api_client.dart';
+import 'rhm_theme.dart';
 
 class RhmMcpStatusChip extends StatefulWidget {
   const RhmMcpStatusChip({
@@ -163,7 +164,7 @@ class _RhmMcpScreenState extends State<RhmMcpScreen> {
                 const SizedBox(height: 12),
                 const Text(
                   'ستُرسل هذه المدخلات إلى خادم MCP الخارجي. لا تضع كلمات مرور أو رموز وصول أو بيانات خاصة.',
-                  style: TextStyle(fontSize: 12, color: Color(0xff9a5a16)),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).extension<RhmUiTokens>()!.warning),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -297,7 +298,7 @@ class _RhmMcpScreenState extends State<RhmMcpScreen> {
                         children: const [
                           Row(
                             children: [
-                              Icon(Icons.hub_outlined, color: Color(0xff159b72)),
+                              Icon(Icons.hub_outlined, color: Theme.of(context).colorScheme.primary),
                               SizedBox(width: 8),
                               Text('Model Context Protocol', style: TextStyle(fontWeight: FontWeight.bold)),
                             ],
@@ -364,7 +365,7 @@ class _RhmMcpScreenState extends State<RhmMcpScreen> {
                             if (!server.enabled || !server.approved || !server.credentialConfigured)
                               const Text(
                                 'يلزم تفعيل الخادم واعتماده وإعداد بيانات اعتماده في Backend قبل اكتشاف الأدوات.',
-                                style: TextStyle(fontSize: 12, color: Color(0xff8a5b20)),
+                                style: TextStyle(fontSize: 12, color: Theme.of(context).extension<RhmUiTokens>()!.warning),
                               )
                             else
                               OutlinedButton.icon(
@@ -377,7 +378,7 @@ class _RhmMcpScreenState extends State<RhmMcpScreen> {
                             for (final tool in _tools[server.id] ?? const <RhmMcpTool>[])
                               ListTile(
                                 contentPadding: EdgeInsets.zero,
-                                leading: const Icon(Icons.build_circle_outlined, color: Color(0xff159b72)),
+                                leading: Icon(Icons.build_circle_outlined, color: Theme.of(context).colorScheme.primary),
                                 title: Text(tool.name),
                                 subtitle: Text(tool.description.isEmpty ? 'أداة قراءة فقط' : tool.description),
                                 trailing: const Icon(Icons.play_arrow_rounded),
@@ -395,7 +396,7 @@ class _RhmMcpScreenState extends State<RhmMcpScreen> {
                   const SizedBox(height: 12),
                   const Text(
                     'تنبيه أمني: لا تُرسل إلى أدوات MCP بيانات اعتماد RHM أو مفاتيح المزودين أو محتوى خاصًا إلا بعد مراجعة الحاجة والموافقة الصريحة.',
-                    style: TextStyle(fontSize: 12, color: Color(0xff777f91), height: 1.5),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
                   ),
                 ],
               ),
