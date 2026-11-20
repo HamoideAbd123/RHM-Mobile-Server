@@ -2603,8 +2603,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                         ),
                                       ],
                                       IconButton(
-                                        visualDensity: VisualDensity.compact,
-                                        constraints: const BoxConstraints(minWidth: 32, minHeight: 30),
+                                        visualDensity: VisualDensity.standard,
+                                        constraints: const BoxConstraints(
+                                          minWidth: RhmDesignTokens.minimumTouchTarget,
+                                          minHeight: RhmDesignTokens.minimumTouchTarget,
+                                        ),
                                         padding: EdgeInsets.zero,
                                         tooltip: 'نسخ الرسالة',
                                         onPressed: () => _copyMessage(message.text),
