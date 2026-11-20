@@ -42,12 +42,16 @@ void main() {
     expect(find.text('تتطابق ألوان الهاتف مع نظام RHM على الويب.'), findsOneWidget);
     expect(find.text('داكن'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('سمة التطبيق'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(DropdownButtonFormField<ThemeMode>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('فاتح').last);
     await tester.pumpAndSettle();
     expect(selectedThemeMode, ThemeMode.light);
 
+    await tester.ensureVisible(find.text('الخادم غير متصل'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('الخادم غير متصل'));
     expect(connectionOpened, isTrue);
 
