@@ -2227,7 +2227,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         alignment: Alignment.center,
                         child: Text(
                           _unreadNotifications > 99 ? '99+' : '$_unreadNotifications',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Theme.of(context).colorScheme.onError,
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
@@ -2325,10 +2325,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        RhmMcpStatusChip(
-                          api: _api,
-                          onPressed: () => _openWorkspace('mcp'),
-                        ),
+                        if (_connectionReady)
+                          RhmMcpStatusChip(
+                            api: _api,
+                            onPressed: () => _openWorkspace('mcp'),
+                          ),
                       ],
                     ),
                   ],
@@ -2381,7 +2382,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 ),
                               ),
                               const SizedBox(height: 20),
-                              const Text(
+                              Text(
                                 'أهلًا بك في RHM',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
@@ -2391,7 +2392,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              const Text(
+                              Text(
                                 'أنا مساعدك الشخصي. اسألني، خطّط لمشاريعك، أو ابدأ محادثة صوتية.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
@@ -2738,7 +2739,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               minimumSize: const Size(46, 46),
                             ),
                             icon: _busy
-                                ? const SizedBox.square(
+                                ? SizedBox.square(
                                     dimension: 18,
                                     child: CircularProgressIndicator(
                                 strokeWidth: 2,
@@ -2764,7 +2765,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
-                        const Flexible(
+                        Flexible(
                           child: Text(
                             'قد تحتاج الردود إلى اتصال بخادم RHM.',
                             style: TextStyle(
@@ -2782,7 +2783,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             ],
           ),
                   ),
-                  _api == null
+                  !shouldShowMoreServerModules(
+                    hasApiClient: _api != null,
+                    connectionReady: _connectionReady,
+                  )
                       ? _buildConnectionRequiredScreen('المشاريع')
                       : RhmProjectsScreen(api: _api!),
                   _buildActivityTab(),
