@@ -23,6 +23,53 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "getStatus" -> result.success(RhmRuntimeService.getSnapshot(this))
 
+                    "setHealthToken" -> {
+                        val token = call.arguments as? String
+                        if (token.isNullOrBlank() || !Regex("^[A-Za-z0-9_-]{32,}$").matches(token)) {
+                            result.error("invalid_health_token", "رمز الوصول غير صالح.", null)
+                        } else {
+                            try {
+                                RhmHealthTokenStore.save(this, token)
+                                result.success(null)
+                            } catch (_: Exception) {
+                                result.error("health_token_store_failed", "تعذر حفظ رمز فحص صحة FastAPI في Android Keystore.", null)
+                            }
+                        }
+                    }
+
+                    "startBackend" -> runTermuxAction("start", result)
+                    "stopBackend" -> runTermuxAction("stop", result)
+                    "restartBackend" -> runTermuxAction("restart", result)
+
+                    "setBackendAutostartEnabled" -> {
+                        val enabled = call.arguments as? Boolean
+                        if (enabled == null) {
+                            result.error("invalid_argument", "قيمة التشغيل التلقائي للخادم غير صالحة.", null)
+                        } else if (enabled && !hasNotificationPermission()) {
+                            result.error("notifications_permission_required", "امنح إذن الإشعارات قبل تشغيل الخادم تلقائياً.", null)
+                        } else if (enabled && (!RhmTermuxRuntimeController.isInstalled(this) ||
+                                                   !RhmTermuxRuntimeController.hasRunCommandPermission(this))) {
+                            result.error("termux_permission_required", "ثبّت Termux وامنح RHM إذن RUN_COMMAND أولاً.", null)
+                        } else {
+                            RhmRuntimeService.setBackendAutostartEnabled(this, enabled)
+                            result.success(null)
+                        }
+                    }
+
+                    "openTermuxSettings" -> {
+                        try {
+                            startActivity(
+                                Intent(
+                                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.parse("package:com.termux")
+                                )
+                            )
+                            result.success(null)
+                        } catch (_: Exception) {
+                            result.error("termux_not_installed", "تعذر فتح إعدادات Termux. تحقق من تثبيته أولاً.", null)
+                        }
+                    }
+
                     "startManager" -> {
                         if (!hasNotificationPermission()) {
                             result.error(
@@ -84,6 +131,19 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    private fun runTermuxAction(action: String, result: MethodChannel.Result) {
+        try {
+            RhmRuntimeService.runBackendCommand(this, action)
+            result.success(mapOf("accepted" to true, "action" to action))
+        } catch (error: SecurityException) {
+            result.error("termux_permission_required", error.message, null)
+        } catch (error: IllegalStateException) {
+            result.error("termux_not_ready", error.message, null)
+        } catch (_: Exception) {
+            result.error("termux_command_failed", "تعذر إرسال أمر إدارة Backend إلى Termux.", null)
+        }
     }
 
     private fun hasNotificationPermission(): Boolean {
