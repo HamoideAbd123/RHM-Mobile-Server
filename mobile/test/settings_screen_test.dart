@@ -35,28 +35,32 @@ void main() {
     expect(find.text('إعدادات RHM'), findsOneWidget);
     expect(find.text('الخادم غير متصل'), findsOneWidget);
     expect(find.text('http://127.0.0.1:8000'), findsOneWidget);
-    await tester.ensureVisible(find.text('التعرّف دون اتصال'));
-    await tester.pumpAndSettle();
-    expect(find.text('التعرّف دون اتصال'), findsOneWidget);
     expect(find.text('سمة التطبيق'), findsOneWidget);
     expect(find.text('تتطابق ألوان الهاتف مع نظام RHM على الويب.'), findsOneWidget);
     expect(find.text('داكن'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('سمة التطبيق'));
-    await tester.pumpAndSettle();
     await tester.tap(find.byType(DropdownButtonFormField<ThemeMode>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('فاتح').last);
     await tester.pumpAndSettle();
     expect(selectedThemeMode, ThemeMode.light);
 
-    await tester.ensureVisible(find.text('الخادم غير متصل'));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('الخادم غير متصل'));
     expect(connectionOpened, isTrue);
 
-    await tester.ensureVisible(find.text('تشخيص الصوت'));
-    await tester.pumpAndSettle();
+    final settingsScrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.text('التعرّف دون اتصال'),
+      240,
+      scrollable: settingsScrollable,
+    );
+    expect(find.text('التعرّف دون اتصال'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('تشخيص الصوت'),
+      180,
+      scrollable: settingsScrollable,
+    );
     await tester.tap(find.text('تشخيص الصوت'));
     expect(voiceDiagnosticsOpened, isTrue);
   });
