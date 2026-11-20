@@ -3,22 +3,21 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'api_client.dart';
-
-const _rhmGreen = Color(0xff159b72);
+import 'rhm_theme.dart';
 
 String _errorText(Object e) => e is RhmApiException ? e.message : 'تعذر إكمال العملية.';
 
 Widget _loadingWidget() => const Center(child: CircularProgressIndicator());
 
-Widget _empty(String title, String subtitle, IconData icon) => Center(
+Widget _empty(BuildContext context, String title, String subtitle, IconData icon) => Center(
   child: Padding(
     padding: const EdgeInsets.all(28),
     child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Icon(icon, size: 42, color: _rhmGreen),
+      Icon(icon, size: 42, color: Theme.of(context).colorScheme.primary),
       const SizedBox(height: 12),
       Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
       const SizedBox(height: 6),
-      Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(color: Colors.black54, height: 1.5)),
+      Text(subtitle, textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5)),
     ]),
   ),
 );
@@ -82,7 +81,7 @@ class _RhmProjectsScreenState extends State<RhmProjectsScreen> {
     body: _loading ? _loadingWidget() : RefreshIndicator(
       onRefresh: _load,
       child: _items.isEmpty
-        ? ListView(children: [_empty('لا توجد مشاريع بعد', 'أنشئ مشروعًا لتنظيم العمل والمهام والذاكرة.', Icons.folder_open_outlined)])
+        ? ListView(children: [_empty(context, 'لا توجد مشاريع بعد', 'أنشئ مشروعًا لتنظيم العمل والمهام والذاكرة.', Icons.folder_open_outlined)])
         : ListView.separated(
             padding: const EdgeInsets.all(12),
             itemCount: _items.length,
@@ -90,7 +89,7 @@ class _RhmProjectsScreenState extends State<RhmProjectsScreen> {
             itemBuilder: (ctx, i) {
               final p = _items[i];
               return Card(elevation: 0, child: ListTile(
-                leading: const CircleAvatar(backgroundColor: Color(0xffe5f5ef), child: Icon(Icons.folder_outlined, color: _rhmGreen)),
+                leading: CircleAvatar(backgroundColor: Theme.of(ctx).extension<RhmUiTokens>()!.accentSoft, child: Icon(Icons.folder_outlined, color: Theme.of(ctx).colorScheme.primary)),
                 title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text(p.description?.isNotEmpty == true ? p.description! : 'الحالة: ${p.status}'),
                 onTap: () => Navigator.push(ctx, MaterialPageRoute(builder: (_) => RhmProjectDetailsScreen(api: widget.api, project: p))),
@@ -133,10 +132,10 @@ class _RhmProjectDetailsScreenState extends State<RhmProjectDetailsScreen> {
     final memories = _data?['memories'] as List? ?? const [];
     return Scaffold(
       appBar: AppBar(title: Text(widget.project.name), actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh))]),
-      body: _loading ? _loadingWidget() : _error != null ? _empty('تعذر تحميل السياق', _error!, Icons.error_outline) : RefreshIndicator(
+      body: _loading ? _loadingWidget() : _error != null ? _empty(context, 'تعذر تحميل السياق', _error!, Icons.error_outline) : RefreshIndicator(
         onRefresh: _load,
         child: ListView(padding: const EdgeInsets.all(16), children: [
-          Text(widget.project.description ?? 'سياق المشروع في RHM', style: const TextStyle(color: Colors.black54)),
+          Text(widget.project.description ?? 'سياق المشروع في RHM', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: 18),
           _detailCard('المهام المفتوحة', tasks, (x) => '${x['title'] ?? 'مهمة'} · ${x['status'] ?? 'open'}', Icons.checklist),
           const SizedBox(height: 12),
@@ -153,8 +152,8 @@ class _RhmProjectDetailsScreenState extends State<RhmProjectDetailsScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         const Divider(),
-        if (values.isEmpty) const Text('لا توجد عناصر مرتبطة.', style: TextStyle(color: Colors.black54)),
-        ...values.map((v) => ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: Icon(icon, color: _rhmGreen), title: Text(label(v)))),
+        if (values.isEmpty) Text('لا توجد عناصر مرتبطة.', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        ...values.map((v) => ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: Icon(icon, color: Theme.of(context).colorScheme.primary), title: Text(label(v)))),
       ]),
     ),
   );
@@ -281,7 +280,7 @@ class _RhmTasksScreenState extends State<RhmTasksScreen> {
           child: RefreshIndicator(
             onRefresh: _load,
             child: _items.isEmpty
-              ? ListView(children: [_empty('لا توجد مهام', 'أنشئ مهمة واربطها بمشروع أو اتركها مهمة عامة.', Icons.task_alt)])
+              ? ListView(children: [_empty(context, 'لا توجد مهام', 'أنشئ مهمة واربطها بمشروع أو اتركها مهمة عامة.', Icons.task_alt)])
         : ListView.separated(
           padding: const EdgeInsets.all(12),
           itemCount: _items.length,
@@ -494,7 +493,7 @@ class _RhmMemoriesScreenState extends State<RhmMemoriesScreen> {
         child: _loading ? _loadingWidget() : RefreshIndicator(
           onRefresh: () => _load(query: _query.text),
           child: _items.isEmpty
-            ? ListView(children: [_empty('لا توجد ذكريات مطابقة', 'أضف معلومة أو ابحث في الذاكرة.', Icons.psychology_outlined)])
+            ? ListView(children: [_empty(context, 'لا توجد ذكريات مطابقة', 'أضف معلومة أو ابحث في الذاكرة.', Icons.psychology_outlined)])
             : ListView.separated(
               padding: const EdgeInsets.all(12),
               itemCount: _items.length,
@@ -511,21 +510,21 @@ class _RhmMemoriesScreenState extends State<RhmMemoriesScreen> {
                   padding: const EdgeInsets.all(12),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                     Row(children: [
-                      Expanded(child: Text(_kind(memory.kind), style: const TextStyle(color: _rhmGreen, fontWeight: FontWeight.bold))),
+                      Expanded(child: Text(_kind(memory.kind), style: TextStyle(color: Theme.of(ctx).colorScheme.primary, fontWeight: FontWeight.bold))),
                       IconButton(onPressed: () => _edit(memory), tooltip: 'تعديل', icon: const Icon(Icons.edit_outlined, size: 20)),
-                      IconButton(onPressed: () => _delete(memory), tooltip: 'حذف', icon: const Icon(Icons.delete_outline, color: Colors.redAccent)),
+                      IconButton(onPressed: () => _delete(memory), tooltip: 'حذف', icon: Icon(Icons.delete_outline, color: Theme.of(ctx).colorScheme.error)),
                     ]),
                     SelectableText(memory.content, style: const TextStyle(height: 1.55)),
                     if (memory.projectId != null) ...[
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(Icons.folder_outlined, size: 14, color: _rhmGreen),
+                          Icon(Icons.folder_outlined, size: 14, color: Theme.of(ctx).colorScheme.primary),
                           const SizedBox(width: 5),
                           Expanded(
                             child: Text(
                               projectLabel,
-                              style: const TextStyle(fontSize: 11, color: _rhmGreen),
+                              style: TextStyle(fontSize: 11, color: Theme.of(ctx).colorScheme.primary),
                             ),
                           ),
                         ],
@@ -580,12 +579,12 @@ class _RhmAgentScreenState extends State<RhmAgentScreen> {
     appBar: AppBar(title: const Text('وكيل RHM')),
     body: ListView(padding: const EdgeInsets.all(16), children: [
       Card(
-        color: const Color(0xffeef7f3),
+        color: Theme.of(context).extension<RhmUiTokens>()!.accentSoft,
         elevation: 0,
         child: const Padding(
           padding: EdgeInsets.all(14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [Icon(Icons.shield_outlined, color: _rhmGreen), SizedBox(width: 8), Text('أدوات قراءة آمنة', style: TextStyle(fontWeight: FontWeight.bold))]),
+            Row(children: [Icon(Icons.shield_outlined, color: Theme.of(context).colorScheme.primary), SizedBox(width: 8), Text('أدوات قراءة آمنة', style: TextStyle(fontWeight: FontWeight.bold))]),
             SizedBox(height: 8),
             Text('يمكن للوكيل الاستعلام عن المشاريع والمهام والذاكرة. لا يملك هذا المسار صلاحية تشغيل أوامر النظام أو حذف البيانات أو تعديلها.', style: TextStyle(height: 1.55)),
           ]),
@@ -669,7 +668,7 @@ class _RhmAuditScreenState extends State<RhmAuditScreen> {
     body: _loading ? _loadingWidget() : RefreshIndicator(
       onRefresh: _load,
       child: _events.isEmpty
-        ? ListView(children: [_empty('لا توجد أحداث بعد', 'ستظهر هنا الأحداث المهمة مثل إنشاء المحادثات وتحديث المهام وحذف الذكريات.', Icons.receipt_long_outlined)])
+        ? ListView(children: [_empty(context, 'لا توجد أحداث بعد', 'ستظهر هنا الأحداث المهمة مثل إنشاء المحادثات وتحديث المهام وحذف الذكريات.', Icons.receipt_long_outlined)])
         : ListView.separated(
             padding: const EdgeInsets.all(12),
             itemCount: _events.length,
@@ -680,12 +679,12 @@ class _RhmAuditScreenState extends State<RhmAuditScreen> {
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
-                  side: const BorderSide(color: Color(0xffe8ebf3)),
+                  side: BorderSide(color: Theme.of(context).extension<RhmUiTokens>()!.border),
                 ),
                 child: ListTile(
                   leading: const CircleAvatar(
-                    backgroundColor: Color(0xffe5f5ef),
-                    child: Icon(Icons.history, color: _rhmGreen),
+                    backgroundColor: Theme.of(context).extension<RhmUiTokens>()!.accentSoft,
+                    child: Icon(Icons.history, color: Theme.of(context).colorScheme.primary),
                   ),
                   title: Text(event.action, style: const TextStyle(fontWeight: FontWeight.w700)),
                   subtitle: Text(
@@ -779,7 +778,7 @@ class _RhmDevicesScreenState extends State<RhmDevicesScreen> {
     body: _loading ? _loadingWidget() : RefreshIndicator(
       onRefresh: _load,
       child: _devices.isEmpty
-        ? ListView(children: [_empty('لا توجد أجهزة مسجلة', 'ستظهر هنا الأجهزة التي سجلت هويتها مع RHM.', Icons.devices_other_outlined)])
+        ? ListView(children: [_empty(context, 'لا توجد أجهزة مسجلة', 'ستظهر هنا الأجهزة التي سجلت هويتها مع RHM.', Icons.devices_other_outlined)])
         : ListView.separated(
             padding: const EdgeInsets.all(12),
             itemCount: _devices.length,
@@ -798,8 +797,8 @@ class _RhmDevicesScreenState extends State<RhmDevicesScreen> {
                 ),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: active ? const Color(0xffe5f5ef) : const Color(0xffffeeee),
-                    child: Icon(active ? Icons.devices : Icons.phonelink_erase, color: active ? _rhmGreen : Colors.redAccent),
+                    backgroundColor: active ? Theme.of(context).extension<RhmUiTokens>()!.accentSoft : Theme.of(context).colorScheme.errorContainer,
+                    child: Icon(active ? Icons.devices : Icons.phonelink_erase, color: active ? Theme.of(context).extension<RhmUiTokens>()!.success : Theme.of(context).colorScheme.error),
                   ),
                   title: Text(device.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text(
@@ -811,7 +810,7 @@ class _RhmDevicesScreenState extends State<RhmDevicesScreen> {
                       ? IconButton(
                           tooltip: 'إلغاء اعتماد الجهاز',
                           onPressed: () => _revoke(device),
-                          icon: const Icon(Icons.block, color: Colors.redAccent),
+                          icon: Icon(Icons.block, color: Theme.of(context).colorScheme.error),
                         )
                       : null,
                 ),
@@ -1309,7 +1308,7 @@ class _RhmVoiceDiagnosticsScreenState extends State<RhmVoiceDiagnosticsScreen> {
             children: [
               Row(
                 children: [
-                  Icon(icon, color: _rhmGreen),
+                  Icon(icon, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(width: 8),
                   Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
                 ],
@@ -1326,7 +1325,7 @@ class _RhmVoiceDiagnosticsScreenState extends State<RhmVoiceDiagnosticsScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: Text(label, style: const TextStyle(color: Colors.black54))),
+            Expanded(child: Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant))),
             const SizedBox(width: 10),
             Flexible(
               child: Text(
