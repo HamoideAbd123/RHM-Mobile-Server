@@ -434,7 +434,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     notes.isEmpty ? 'لم يرفق المطور سجل تغييرات لهذا الإصدار.' : notes,
                   ),
                   const SizedBox(height: 10),
-                  const Text(
+                  Text(
                     'سيتم التحقق من SHA-256 قبل فتح مثبت Android. يجب الموافقة على التثبيت من نافذة Android.',
                     style: TextStyle(
                       fontSize: 12,
@@ -2049,7 +2049,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
+          Text(
             'تابع العمل والتنبيهات والأحداث المهمة في RHM.',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
