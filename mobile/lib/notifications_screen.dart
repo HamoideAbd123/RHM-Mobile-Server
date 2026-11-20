@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'api_client.dart';
+import 'rhm_theme.dart';
 
 const _categoryLabels = <String, String>{
   'chat': 'الدردشة والردود',
@@ -318,8 +319,8 @@ class _RhmNotificationsScreenState extends State<RhmNotificationsScreen>
                       Container(
                         width: 8,
                         height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xff159b72),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
                           shape: BoxShape.circle,
                         ),
                       ),
