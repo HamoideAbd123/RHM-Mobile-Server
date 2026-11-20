@@ -92,7 +92,7 @@ class RhmRuntimeService : Service() {
         }
 
         try {
-            promoteToForeground(buildNotification(apiPortIsReachable()))
+            promoteToForeground(buildNotification(false))
             startMonitoring()
         } catch (error: Exception) {
             getSharedPreferences(PREFS, Context.MODE_PRIVATE)

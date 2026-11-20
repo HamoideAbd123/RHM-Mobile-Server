@@ -193,7 +193,7 @@ class _RhmAndroidRuntimeScreenState extends State<RhmAndroidRuntimeScreen>
                     children: [
                       Expanded(
                         child: FilledButton.icon(
-                          onPressed: _busy || running
+                          onPressed: _busy || running || !_status.notificationPermissionGranted
                               ? null
                               : () => _run(_bridge.startManager),
                           icon: const Icon(Icons.play_arrow),

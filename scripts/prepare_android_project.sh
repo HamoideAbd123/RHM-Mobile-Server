@@ -82,14 +82,17 @@ gradle_text = gradle_path.read_text(encoding="utf-8")
 # Give debug builds a separate Android identity so testers never overwrite
 # the installed signed release with an APK signed by the CI debug key.
 if 'applicationIdSuffix = ".debug"' not in gradle_text:
-    android_anchor = "android {\\n"
+    android_anchor = "android {"
     if android_anchor not in gradle_text:
         raise SystemExit("Could not locate the generated android block for debug applicationIdSuffix")
-    gradle_text = gradle_text.replace(
-        android_anchor,
-        android_anchor + '    buildTypes {\\n        getByName("debug") {\\n            applicationIdSuffix = ".debug"\\n        }\\n    }\\n',
-        1,
-    )
+    debug_block = """android {
+    buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+        }
+    }
+"""
+    gradle_text = gradle_text.replace(android_anchor, debug_block, 1)
 
 min_sdk_old = "minSdk = flutter.minSdkVersion"
 if min_sdk_old in gradle_text:
