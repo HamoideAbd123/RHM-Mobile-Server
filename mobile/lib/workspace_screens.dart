@@ -581,8 +581,8 @@ class _RhmAgentScreenState extends State<RhmAgentScreen> {
       Card(
         color: Theme.of(context).extension<RhmUiTokens>()!.accentSoft,
         elevation: 0,
-        child: const Padding(
-          padding: EdgeInsets.all(14),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [Icon(Icons.shield_outlined, color: Theme.of(context).colorScheme.primary), SizedBox(width: 8), Text('أدوات قراءة آمنة', style: TextStyle(fontWeight: FontWeight.bold))]),
             SizedBox(height: 8),
@@ -682,7 +682,7 @@ class _RhmAuditScreenState extends State<RhmAuditScreen> {
                   side: BorderSide(color: Theme.of(context).extension<RhmUiTokens>()!.border),
                 ),
                 child: ListTile(
-                  leading: const CircleAvatar(
+                  leading: CircleAvatar(
                     backgroundColor: Theme.of(context).extension<RhmUiTokens>()!.accentSoft,
                     child: Icon(Icons.history, color: Theme.of(context).colorScheme.primary),
                   ),
@@ -1280,7 +1280,7 @@ class _RhmVoiceDiagnosticsScreenState extends State<RhmVoiceDiagnosticsScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'ملاحظة: تطبيق RHM يستخدم محركات Android المثبتة ولا يضمّن أصواتًا أو نموذج تعرف صوتي داخل APK. عدم توفر صوت محلي لا يعني بالضرورة تعذر استخدام صوت متصل بالشبكة.',
                     style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
                   ),
