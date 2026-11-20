@@ -26,6 +26,9 @@ void main() {
         'apiPortReachable': true,
         'lastApiCheckAt': 1760000000000,
         'lastError': '',
+        'recoveryAttempts': 2,
+        'lastRecoveryAt': 1760000001000,
+        'lastRecoveryAction': 'restart',
       };
     });
 
@@ -38,6 +41,9 @@ void main() {
     expect(status.apiPortReachable, isTrue);
     expect(status.lastApiCheckAt, isNotNull);
     expect(status.lastError, isNull);
+    expect(status.recoveryAttempts, 2);
+    expect(status.lastRecoveryAt, isNotNull);
+    expect(status.lastRecoveryAction, 'restart');
   });
 
   test('sends the explicit boot preference to Android', () async {
