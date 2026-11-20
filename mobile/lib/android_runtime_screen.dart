@@ -256,7 +256,7 @@ class _RhmAndroidRuntimeScreenState extends State<RhmAndroidRuntimeScreen>
                   if (_status.lastApiCheckAt != null) ...[
                     const SizedBox(height: 6),
                     Text(
-                      'آخر فحص: ' + _status.lastApiCheckAt!.toLocal().toString(),
+                      'آخر فحص: ${_status.lastApiCheckAt!.toLocal()}',
                       style: const TextStyle(fontSize: 11, color: Colors.black54),
                       textDirection: TextDirection.ltr,
                     ),

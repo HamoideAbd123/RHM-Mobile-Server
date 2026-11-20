@@ -79,3 +79,12 @@ The next CI run must prove the correction by completing the ARM64 debug build. T
 The private repository's Android CI workflow generates the project using `flutter create --org com.rhm --project-name rhm_mobile`. The public preparation script now uses the same organization prefix, producing application ID `com.rhm.rhm_mobile` rather than the initially introduced `org.rhm.rhm_mobile`.
 
 This aligns the public build scaffold with the established private CI configuration. It does **not** prove that the installed phone APK uses this ID or that signing is compatible; package name and certificate fingerprint must still be checked against the installed APK before any release or in-place update.
+
+
+## Static-analysis cleanup — monitor Dart files
+
+Latest monitor CI at `1e97fdda84067a9ee88d9dcc8b4966ffa145d4fe` passed preparation and all 59 Flutter tests, then stopped at `flutter analyze` on two style infos:
+- use string interpolation rather than string concatenation for the last-check label;
+- use a package import rather than a relative import into lib from a test.
+
+Both were fixed in the next commit. The Android compilation and package identity check have not yet run on the monitor implementation until analyze passes.

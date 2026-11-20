@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../lib/android_runtime_bridge.dart';
+import 'package:rhm_mobile/android_runtime_bridge.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
