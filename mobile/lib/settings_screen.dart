@@ -231,7 +231,7 @@ class RhmSettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'لا تُعرض رموز الوصول أو مفاتيح المزوّدين داخل هذه الصفحة. تبقى بيانات الاعتماد محفوظة في التخزين الآمن على الهاتف أو في إعدادات الخادم.',
             style: TextStyle(fontSize: 12, height: 1.6, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
