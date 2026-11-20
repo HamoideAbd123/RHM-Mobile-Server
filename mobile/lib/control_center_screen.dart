@@ -517,7 +517,7 @@ class _RhmControlCenterScreenState extends State<RhmControlCenterScreen> {
                     )),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'لا تعرض اللوحة مفاتيح API أو رموز الوصول أو بيانات الاعتماد. الإجراءات غير المدعومة لا تظهر كأزرار وهمية.',
                     style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.6),
                   ),
