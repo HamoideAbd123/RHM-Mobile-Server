@@ -2223,7 +2223,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         child: Text(
                           _unreadNotifications > 99 ? '99+' : '$_unreadNotifications',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onError,
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
                           ),
@@ -2675,7 +2675,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     Container(
                       padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(26),
                         border: Border.all(
                           color: Theme.of(context).extension<RhmUiTokens>()!.border,
@@ -2735,7 +2735,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             icon: _busy
                                 ? const SizedBox.square(
                                     dimension: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
                                   )
                                 : const Icon(Icons.arrow_upward_rounded),
                           ),
