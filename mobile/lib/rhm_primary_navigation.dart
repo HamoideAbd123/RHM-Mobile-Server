@@ -13,11 +13,26 @@ class RhmPrimaryNavigation extends StatelessWidget {
   final bool useRail;
 
   static const _items = [
-    (icon: Icons.chat_bubble_outline_rounded, selected: Icons.chat_rounded, label: 'الدردشة'),
-    (icon: Icons.folder_outlined, selected: Icons.folder_rounded, label: 'المشاريع'),
-    (icon: Icons.bolt_outlined, selected: Icons.bolt_rounded, label: 'النشاط'),
-    (icon: Icons.grid_view_outlined, selected: Icons.grid_view_rounded, label: 'المزيد'),
-    (icon: Icons.hub_outlined, selected: Icons.hub_rounded, label: 'MCP'),
+    (
+      icon: Icons.chat_bubble_outline_rounded,
+      selected: Icons.chat_rounded,
+      label: 'المحادثات',
+    ),
+    (
+      icon: Icons.folder_outlined,
+      selected: Icons.folder_rounded,
+      label: 'المشاريع',
+    ),
+    (
+      icon: Icons.bolt_outlined,
+      selected: Icons.bolt_rounded,
+      label: 'النشاط',
+    ),
+    (
+      icon: Icons.grid_view_outlined,
+      selected: Icons.grid_view_rounded,
+      label: 'المزيد',
+    ),
   ];
 
   @override
