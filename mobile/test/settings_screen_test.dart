@@ -35,6 +35,8 @@ void main() {
     expect(find.text('إعدادات RHM'), findsOneWidget);
     expect(find.text('الخادم غير متصل'), findsOneWidget);
     expect(find.text('http://127.0.0.1:8000'), findsOneWidget);
+    await tester.ensureVisible(find.text('التعرّف دون اتصال'));
+    await tester.pumpAndSettle();
     expect(find.text('التعرّف دون اتصال'), findsOneWidget);
     expect(find.text('سمة التطبيق'), findsOneWidget);
     expect(find.text('تتطابق ألوان الهاتف مع نظام RHM على الويب.'), findsOneWidget);
