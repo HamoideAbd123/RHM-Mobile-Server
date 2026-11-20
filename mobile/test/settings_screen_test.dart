@@ -61,6 +61,8 @@ void main() {
       180,
       scrollable: settingsScrollable,
     );
+    await tester.ensureVisible(find.text('تشخيص الصوت'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('تشخيص الصوت'));
     expect(voiceDiagnosticsOpened, isTrue);
   });
