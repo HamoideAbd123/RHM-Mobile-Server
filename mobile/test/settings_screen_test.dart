@@ -18,6 +18,7 @@ void main() {
           locale: 'ar-SA',
           offlineRecognition: false,
           onOpenConnectionSettings: () => connectionOpened = true,
+          onOpenAndroidRuntime: () {},
           onOpenVoiceDiagnostics: () => voiceDiagnosticsOpened = true,
           onCheckAppUpdates: () {},
           onProviderChanged: (_) {},
