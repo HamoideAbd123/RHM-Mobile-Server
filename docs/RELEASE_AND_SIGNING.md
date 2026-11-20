@@ -38,3 +38,8 @@ The public workflow runs unit/widget tests and static analysis, then creates an 
 ## Update proxy migration
 
 The current app asks the private FastAPI backend for update metadata and assets. The backend's GitHub token and release-source allowlist are currently associated with the private core repository. Before the public repository starts publishing app releases, update and test the private backend's update proxy to read this repository and only its approved stable APK/checksum assets. Keep the credential server-side and read-only.
+
+
+## Debug package isolation
+
+CI now adds `.debug` to the debug build application ID, producing `com.rhm.rhm_mobile.debug` while leaving the intended release ID `com.rhm.rhm_mobile` unchanged. The workflow inspects the APK manifest with Android `aapt` and fails if the debug package name is not exact. This allows a development build to be installed side-by-side without replacing the existing release installation. It does not prove the release signing key is available or that a future signed build can update the installed app.

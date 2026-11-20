@@ -12,7 +12,7 @@
 - [x] Add a repeatable Android project preparation script.
 - [x] Add a mobile-only GitHub Actions workflow for Flutter tests, analysis and ARM64 debug compilation.
 - [x] Document API, architecture, security, signing and outstanding limitations.
-- [ ] Get a green CI run on the import pull request.
+- [x] Get a green baseline CI run on the import before native-service changes; rerun CI for the current native-service branch head.
 - [ ] Review and merge the import pull request after the CI and diff are reviewed.
 
 ## Phase 1 — Build and API contract stabilization
@@ -26,12 +26,16 @@
 
 ## Phase 2 — Android native host foundation (Kotlin)
 
-- Add Kotlin sources to the existing Flutter Android host; do not create a second Android app.
-- Define a typed Flutter method-channel contract for start, stop, status, logs and user-visible errors.
-- Add the foreground service, notification channel and explicit user start/stop actions.
+- [x] Add Kotlin sources to the existing Flutter Android host; do not create a second Android app.
+- [x] Define the initial Flutter method-channel contract for start, stop, status and notification settings.
+- [x] Add the initial foreground monitor, notification channel and explicit user start/stop actions.
+- [x] Add a boot receiver with a default-off, user-controlled preference.
+- [ ] Add authenticated FastAPI health checks and process supervision; TCP reachability alone is not health.
+
 - Declare only the foreground-service type and permissions that match the actual runtime workload and target SDK.
 - Add lifecycle tests for activity recreation, service disconnection, notification actions and duplicate start requests.
-- Add boot recovery only after validating the current Android version's restrictions; do not rely on a boot receiver as an unconditional restart mechanism.
+- [ ] Device-test the boot receiver and current Android restrictions; do not rely on it as an unconditional restart mechanism.
+- [ ] Validate `specialUse` classification and manifest declarations against current target SDK and distribution policy.
 
 ## Phase 3 — Python-on-Android feasibility proof
 

@@ -9,12 +9,12 @@ Android integration workspace for the existing RHM mobile client and the future 
 - `.github/workflows/mobile-ci.yml`: runs Flutter tests and analysis, then builds an ARM64 debug APK for CI verification.
 - `docs/`: architecture, API boundary, release/signing constraints, roadmap and verified project status.
 
-The Flutter client is an interface to the existing RHM FastAPI backend. **This import does not yet embed Python, run Uvicorn as an Android-managed service, or make the phone-hosted server permanently available.** Those are later engineering milestones with separate compatibility and device acceptance tests.
+The Flutter client is an interface to the existing RHM FastAPI backend. The Android host now contains an initial Kotlin foreground monitor, a persistent status notification, a loopback TCP probe, an explicit user start/stop control, and an opt-in boot preference. **It does not yet start, stop or supervise Python/Termux, does not verify authenticated FastAPI/database health, and does not guarantee permanent uptime.**
 
 ## Existing architecture decision
 
 - Flutter remains the single mobile UI; no duplicate Android app is being created.
-- Kotlin/Android will own lifecycle integration and service orchestration when the native runtime phase begins.
+- Kotlin/Android owns the initial foreground monitor, notification, status bridge and opt-in boot request. Python process supervision remains a later phase.
 - The existing Python/FastAPI/Uvicorn backend remains the application server until an Android-compatible runtime is proven.
 - The backend, database, model-provider keys and private operational configuration stay in [the private RHM core repository](https://github.com/HamoideAbd123/rhm-personal-ai-core).
 
@@ -46,7 +46,7 @@ flutter analyze
 flutter build apk --debug --target-platform android-arm64
 ```
 
-The debug APK is a CI/test artifact only. Do not distribute it as an update to an already installed signed RHM release.
+The debug APK is a CI/test artifact only and uses the package ID `com.rhm.rhm_mobile.debug`; the intended release ID remains `com.rhm.rhm_mobile`. Do not distribute it as an update to an already installed signed RHM release.
 
 The GitHub Actions workflow performs the same preparation and publishes an ARM64 debug artifact when checks pass. A signed release workflow is intentionally not enabled yet: it must use the exact existing RHM Android signing identity to preserve in-place update compatibility. See [Release and signing](docs/RELEASE_AND_SIGNING.md).
 
@@ -73,5 +73,18 @@ The imported app has an authenticated in-app update client that currently talks 
 - Android does not guarantee that a process or service runs forever. Foreground-service rules, user force-stop, battery policies, memory pressure and manufacturer-specific controls still apply.
 - The app's current backend and model generation are not offline. Local networking to loopback does not make a cloud model available without Internet.
 - The Python runtime and database strategy for a standalone Android installation are not selected. They must be proven on ARM64 with the real dependency set before implementation.
-- No Kotlin foreground service, boot receiver, Python runtime bundle, or production-signed APK is included in this first import.
+- The Kotlin foreground monitor and opt-in boot receiver are an initial milestone only; they do not yet manage the Python server or Termux. No embedded Python runtime, verified target-device persistence test, or production-signed APK is included.
 - This repository has no `LICENSE` file yet. Do not assume that public visibility grants permission to reuse or redistribute the code; select a license deliberately before accepting external contributions.
+
+
+## Android local monitor (initial milestone)
+
+Open **لوحة تحكم RHM → مضيف Android المحلي** in the Android app. The user can start or stop the visible foreground monitor and explicitly opt into a boot-time start attempt. On Android 13+, notification permission must be granted.
+
+The notification reports only whether TCP accepts a connection at `127.0.0.1:8000`. It does not claim that the FastAPI health route, bearer-token authentication, PostgreSQL, model provider, or agent is healthy. The boot option starts only this monitor, not Python or Termux.
+
+The test APK is deliberately isolated under `com.rhm.rhm_mobile.debug`; it must not replace the existing `com.rhm.rhm_mobile` installation.
+
+Foreground-service type `specialUse` is the current candidate for this specific monitor. Reassess it against the real workload, target SDK and distribution channel before a production release:
+- [Foreground-service types](https://developer.android.com/develop/background-work/services/fgs/service-types)
+- [Android 15 behavior changes](https://developer.android.com/about/versions/15/behavior-changes-15)

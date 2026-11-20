@@ -32,3 +32,15 @@
 - Do not publish unsigned/debug builds as production updates.
 - Preserve the existing Android application ID and signing identity for in-place updates.
 - A public repository does not imply an open-source license; add a license only after making that decision.
+
+
+## Android foreground monitor
+
+- The foreground monitor starts only through an explicit app action or the user's enabled boot preference.
+- The ongoing notification must remain visible and report only the actual TCP probe result.
+- The boot preference defaults to false. Do not silently enable it.
+- On Android 13+, the app requires notification permission before starting or enabling boot monitoring.
+- The current service probes only `127.0.0.1:8000`; it never sends an API token in its monitor probe.
+- No Termux permission, Termux configuration change, arbitrary command execution, root or stealth behavior is implemented.
+- The `specialUse` foreground-service classification must be re-evaluated against the actual workload and distribution policy before release.
+- The CI debug APK has a distinct `.debug` application ID and must not be treated as a release update.

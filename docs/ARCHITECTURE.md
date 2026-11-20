@@ -9,7 +9,7 @@ The repository separates the mobile client from the existing RHM application ser
 | Layer | Responsibility | Current state |
 |---|---|---|
 | Flutter client | Chat UI, conversations, projects, tasks, memory, agent, audit, devices, voice UI and settings | Imported from the private core repository |
-| Kotlin Android host | Android lifecycle, foreground-service entry point, notification, boot/restart policy, native process manager and Flutter bridge | Planned; not implemented in this baseline |
+| Kotlin Android host | Foreground monitor, notification, opt-in boot attempt and Flutter method channel | Initial monitor implemented; Python/Termux process manager is not implemented |
 | Python runtime | Existing RHM business logic, FastAPI routes, provider routing, agents and MCP gateway | Remains in the private core repository |
 | Uvicorn | ASGI HTTP server for the existing FastAPI application | Existing server; not replaced |
 | Database | Persistent RHM records and migrations | Remains with the existing backend during transition |
@@ -90,3 +90,31 @@ The runtime manager should track at least: stopped, starting, healthy, degraded,
 On an unexpected runtime exit, use bounded restart attempts with exponential backoff and a visible error state. Avoid a tight restart loop. Preserve logs and last known exit information. If health cannot be restored, keep the app usable for diagnostics and present a safe recovery action.
 
 The first implementation should prefer correctness and recoverability over aggressive polling or keeping unnecessary wake locks. Battery and memory behavior must be measured on the actual phone.
+
+
+## 8. Implemented monitor boundary
+
+The first native milestone adds:
+- `RhmRuntimeService`: a visible foreground service with a persistent low-importance notification and explicit stop action.
+- `RhmBootReceiver`: requests the monitor after `BOOT_COMPLETED` only when the user enabled the preference; notification permission is checked on Android 13+.
+- `RhmAndroidRuntimeBridge`: typed Flutter method-channel calls for status, start, stop, autostart preference and opening notification settings.
+- A 15-second TCP connect probe to `127.0.0.1:8000`.
+
+The probe is deliberately described as **TCP port reachable**, not application health. It does not send the bearer token, does not query `/mobile/health`, and does not assert that the database or model provider works.
+
+The monitor does not spawn Python, Uvicorn, Debian or Termux. There is no shell execution endpoint and no Termux permission is requested. Termux integration remains a separate opt-in security design.
+
+## 9. Debug and release application identity
+
+- Intended release application ID: `com.rhm.rhm_mobile`, matching the existing private workflow's Flutter org/project-name values. Verify this against the installed APK.
+- Debug CI application ID: `com.rhm.rhm_mobile.debug`, configured through the Gradle `debug` build type's `applicationIdSuffix`.
+- Debug APK uses debug signing and is not an in-place update for the installed release.
+
+## 10. Special-use foreground service decision gate
+
+The monitor currently declares `specialUse` and the `FOREGROUND_SERVICE_SPECIAL_USE` permission, together with a manifest subtype explanation. This is a candidate classification for user-started local-server monitoring when no standard service category fits; it is not a blanket approval. Before a production release, validate the actual workload and Google Play policy (if distributed through Play), and revisit this if the workload changes to sync, media, camera, microphone or another category.
+
+Official guidance:
+- [Foreground-service types and special use](https://developer.android.com/develop/background-work/services/fgs/service-types)
+- [Foreground-service launch requirements](https://developer.android.com/develop/background-work/services/fgs/launch)
+- [Android 15 background-start changes](https://developer.android.com/about/versions/15/behavior-changes-15)
