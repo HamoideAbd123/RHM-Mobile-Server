@@ -1,0 +1,60 @@
+# RHM Mobile Server — verified status
+
+**Status date:** 2026-11-20  
+**Work branch:** `bootstrap/import-flutter-client-2026-11-20`
+
+## Repository state before this change
+
+- Private source: [HamoideAbd123/rhm-personal-ai-core](https://github.com/HamoideAbd123/rhm-personal-ai-core), default branch `main`.
+- Public target: [HamoideAbd123/RHM-Mobile-Server](https://github.com/HamoideAbd123/RHM-Mobile-Server), default branch `main`.
+- The public repository initially contained only its architecture README.
+- The private repository contained the Flutter app under `mobile/`; its manifest declared `0.1.10+11`.
+
+## Import source and contents
+
+- Source commit inspected: `b1a260c2399f5c20265ceec32d27ec18ae31bea5`.
+- Source mobile subtree: `d023a1c1499a2a7a5d3a338ceb219090eea9839a`.
+- Imported: 33 existing mobile source/config/test files, retaining the `mobile/` directory.
+- Included: Dart application code, all existing Flutter tests, pubspec, analysis options, changelog and Android manifest/Gradle/network-security templates.
+- Excluded: Python backend, Next.js frontend, migrations, databases, private operational reports, `.env`, provider keys, GitHub credentials, API token files and local machine paths.
+- Replaced the app README because it contained private device-local paths and included stale navigation descriptions that conflicted with the current feature list.
+- Added a root README, architecture/API/security/release docs, roadmap, status report, Android preparation script and mobile-only CI workflow.
+- Strengthened ignore rules for local secrets, Android signing files and generated APK/AAB files.
+
+## Security review performed
+
+- Searched the source repository for the private home-path pattern; the mobile README was the only match under the mobile tree. It was rewritten before import.
+- Searched for common GitHub personal-token prefix `ghp_`; no matches were returned.
+- Reviewed the app README, package manifest, Android templates, update client and API client. The app uses a server bearer token at runtime, not a credential embedded in the checked-in Dart source.
+- This is a source-tree review, not a complete historical secret scan of every commit in the private repository. No history from the private repository is copied into this public repository.
+- No keystore, signing password, production database or actual API token was read or copied.
+
+## Verification state
+
+| Check | Result |
+|---|---|
+| Source and target repositories confirmed | Pass |
+| Source mobile tree enumerated | Pass |
+| Mobile files fetched from source `main` | Pass |
+| Public import branch created | Pass |
+| Security/path review of mobile source | Pass, scope noted above |
+| Android preparation script added | Added; execution pending |
+| Flutter unit/widget tests | Pending GitHub Actions |
+| Flutter static analysis | Pending GitHub Actions |
+| Android ARM64 debug build | Pending GitHub Actions |
+| Signed release APK | Not attempted; existing signing identity must be preserved |
+| Kotlin foreground service / boot receiver | Not implemented |
+| Embedded Python runtime / database compatibility | Not implemented; feasibility phase pending |
+| Huawei Android 10 end-to-end acceptance | Pending device tests |
+
+## Known issues to resolve before release
+
+1. `pubspec.yaml` says `0.1.10+11`, while the top visible changelog entry is `0.1.7+8`. Reconcile release history before tagging.
+2. The installed app's update client currently uses authenticated update-proxy routes on the private backend, whose release source is the private RHM core repository. Public mobile releases require an intentional backend proxy migration.
+3. The public repository has no license file. Choose a license deliberately before accepting external contributions.
+4. The new workflow builds only an ARM64 debug APK. A distributable update must be signed with the exact established RHM signing identity; never create a replacement key for an in-place update.
+5. The current import does not run a Python server as an Android service. That requires the Kotlin host and Python ARM64 feasibility milestones.
+
+## Safety of repository changes
+
+All modifications are confined to this public repository's import branch. The private RHM core repository and its `main` branch are not modified by this operation.
