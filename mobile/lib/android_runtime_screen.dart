@@ -182,7 +182,9 @@ class _RhmAndroidRuntimeScreenState extends State<RhmAndroidRuntimeScreen>
                         size: 30,
                       ),
                       title: Text(running ? 'مراقبة Android تعمل' : 'مراقبة Android متوقفة'),
-                      subtitle: Text(_healthLabel),
+                      subtitle: Text(
+                        '$_healthLabel\\nمحاولات استعادة الخادم: ${_status.recoveryAttempts}',
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
