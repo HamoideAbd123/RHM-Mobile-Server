@@ -44,7 +44,7 @@ jobs:
           cache: true
 
       - name: Prepare generated Android host
-        run: ./scripts/prepare_android_project.sh
+        run: bash ./scripts/prepare_android_project.sh
 
       - name: Resolve dependencies
         working-directory: mobile/build/rhm_mobile
