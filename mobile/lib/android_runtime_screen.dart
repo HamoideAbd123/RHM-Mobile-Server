@@ -98,6 +98,48 @@ class _RhmAndroidRuntimeScreenState extends State<RhmAndroidRuntimeScreen>
     await _run(() => _bridge.setAutostartEnabled(enabled));
   }
 
+  Future<void> _setBackendAutostart(bool enabled) async {
+    await _run(() => _bridge.setBackendAutostartEnabled(enabled));
+  }
+
+  Future<void> _runBackend(Future<void> Function() action) async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      if (!_status.managerRunning) await _bridge.startManager();
+      await action();
+      await Future<void>.delayed(const Duration(seconds: 2));
+      await _refresh();
+    } on RhmAndroidRuntimeException catch (error) {
+      if (!mounted) return;
+      setState(() => _error = error.message);
+      if (error.code == 'termux_permission_required' ||
+          error.code == 'termux_not_ready') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تحقق من تثبيت Termux ومنح إذن RUN_COMMAND وإعداد allow-external-apps.'),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) setState(() => _error = 'تعذر إرسال أمر Backend إلى Termux.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  String get _healthLabel => switch (_status.apiHealthState) {
+        'healthy' => 'FastAPI سليم والمصادقة ناجحة',
+        'unauthorized' => 'FastAPI رفض رمز الوصول المحفوظ',
+        'token_missing' => 'رمز فحص الصحة غير مُزامن بعد',
+        'invalid_response' => 'استجابة فحص FastAPI غير صالحة',
+        'unsupported' => 'غير مدعوم على هذا الجهاز',
+        _ => 'FastAPI غير متاح أو لم يؤكد الجاهزية',
+      };
+
   @override
   Widget build(BuildContext context) {
     if (defaultTargetPlatform != TargetPlatform.android) {
@@ -113,7 +155,6 @@ class _RhmAndroidRuntimeScreenState extends State<RhmAndroidRuntimeScreen>
     }
 
     final running = _status.managerRunning;
-    final portReachable = _status.apiPortReachable;
 
     return Scaffold(
       appBar: AppBar(
@@ -141,11 +182,7 @@ class _RhmAndroidRuntimeScreenState extends State<RhmAndroidRuntimeScreen>
                         size: 30,
                       ),
                       title: Text(running ? 'مراقبة Android تعمل' : 'مراقبة Android متوقفة'),
-                      subtitle: Text(
-                        portReachable
-                            ? 'منفذ RHM المحلي متاح عبر TCP.'
-                            : 'لا توجد استجابة على 127.0.0.1:8000.',
-                      ),
+                      subtitle: Text(_healthLabel),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -155,7 +192,83 @@ class _RhmAndroidRuntimeScreenState extends State<RhmAndroidRuntimeScreen>
                       onChanged: _busy ? null : _setAutostart,
                       title: const Text('تشغيل المراقبة بعد إقلاع الهاتف'),
                       subtitle: const Text(
-                        'هذا يشغّل خدمة المراقبة فقط. لا يشغّل Python أو Termux تلقائياً في هذه المرحلة.',
+                        'يشغّل خدمة المراقبة بعد إقلاع الهاتف. عند تفعيل تشغيل Backend أدناه، تحاول الخدمة تشغيل Python عبر Termux أيضاً.',
+                      ),
+                    ),
+                  ),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('خادم Python / FastAPI عبر Termux',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          Text(_status.termuxInstalled
+                              ? 'تم العثور على خدمة Termux RUN_COMMAND.'
+                              : 'لم يتم العثور على Termux أو خدمة RUN_COMMAND.'),
+                          Text(_status.termuxPermissionGranted
+                              ? 'إذن RHM لتشغيل أوامر Termux ممنوح.'
+                              : 'إذن RUN_COMMAND غير ممنوح لـ RHM.'),
+                          const SizedBox(height: 10),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            value: _status.backendAutostartEnabled,
+                            onChanged: _busy || !_status.termuxInstalled ||
+                                    !_status.termuxPermissionGranted
+                                ? null
+                                : _setBackendAutostart,
+                            title: const Text('تشغيل Backend بعد إقلاع الهاتف'),
+                            subtitle: const Text(
+                              'يتطلب إعداد Termux وتثبيت سكربت التحكم. هذا الخيار يفعّل بدء خدمة المراقبة أيضاً.',
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: FilledButton.icon(
+                                  onPressed: _busy || !_status.termuxInstalled ||
+                                          !_status.termuxPermissionGranted
+                                      ? null
+                                      : () => _runBackend(_bridge.startBackend),
+                                  icon: const Icon(Icons.play_arrow),
+                                  label: const Text('تشغيل Backend'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _busy || !_status.termuxInstalled ||
+                                          !_status.termuxPermissionGranted
+                                      ? null
+                                      : () => _runBackend(_bridge.restartBackend),
+                                  icon: const Icon(Icons.restart_alt),
+                                  label: const Text('إعادة التشغيل'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          OutlinedButton.icon(
+                            onPressed: _busy || !_status.termuxInstalled ||
+                                    !_status.termuxPermissionGranted
+                                ? null
+                                : () => _runBackend(_bridge.stopBackend),
+                            icon: const Icon(Icons.stop),
+                            label: const Text('إيقاف Backend'),
+                          ),
+                          TextButton.icon(
+                            onPressed: _busy ? null : () => _run(_bridge.openTermuxSettings),
+                            icon: const Icon(Icons.open_in_new),
+                            label: const Text('فتح إعدادات Termux'),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'يلزم تثبيت سكربت rhm-runtime-control داخل مجلد Termux الخاص، وضبط allow-external-apps=true يدوياً. RHM لا يغيّر إعدادات Termux ولا يقبل أوامر shell حرة؛ يرسل فقط start/stop/restart.',
+                            style: TextStyle(fontSize: 12, height: 1.5),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -239,11 +352,11 @@ class _RhmAndroidRuntimeScreenState extends State<RhmAndroidRuntimeScreen>
                           ),
                           SizedBox(height: 8),
                           Text(
-                            'الخدمة تعرض إشعاراً دائماً وتفحص اتصال TCP بمنفذ 8000 كل 15 ثانية. هذا لا يثبت أن API يقبل رمز الوصول أو أن PostgreSQL والوكيل يعملان.',
+                            'الخدمة تفحص GET /mobile/health كل 20 ثانية باستخدام Bearer token محفوظ في Android Keystore. هذا لا يثبت جاهزية PostgreSQL أو مزوّد النماذج.',
                           ),
                           SizedBox(height: 8),
                           Text(
-                            'لم يُربط تشغيل أو إيقاف عمليات Python/Termux بعد. سنضيف ذلك عبر تكامل محدود واختياري بعد التحقق من بيئة Termux وصلاحياتها.',
+                            'تشغيل وإيقاف Python يمران عبر سكربت ثابت داخل Termux. هذه مرحلة تكامل Termux وليست Python مدمجاً داخل APK؛ توافق جميع مكتبات RHM مع Chaquopy ما زال قيد الإثبات.',
                           ),
                           SizedBox(height: 8),
                           Text(
