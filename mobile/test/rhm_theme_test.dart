@@ -14,6 +14,7 @@ void main() {
     expect(theme.colorScheme.onSurface, const Color(0xfff2f4f1));
     expect(tokens.sidebar, const Color(0xff151716));
     expect(tokens.border, const Color(0xff2a2e2b));
+    expect(tokens.danger, const Color(0xff8d3936));
   });
 
   test('light theme matches the approved RHM web palette', () {
@@ -27,5 +28,10 @@ void main() {
     expect(theme.colorScheme.onSurface, const Color(0xff202521));
     expect(tokens.sidebar, const Color(0xfff0f2ee));
     expect(tokens.border, const Color(0xffe1e6df));
+    expect(tokens.muted, const Color(0xff667266));
+    expect(RhmDesignTokens.minimumTouchTarget, 48);
+    expect(RhmDesignTokens.spacing16, 16);
+    expect(RhmDesignTokens.radiusCard, 12);
+    expect(RhmDesignTokens.tabletBreakpoint, 720);
   });
 }
