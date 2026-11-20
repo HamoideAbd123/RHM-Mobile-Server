@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'android_runtime_bridge.dart';
+import 'rhm_theme.dart';
 
 class RhmAndroidRuntimeScreen extends StatefulWidget {
   const RhmAndroidRuntimeScreen({super.key});
@@ -178,7 +179,9 @@ class _RhmAndroidRuntimeScreenState extends State<RhmAndroidRuntimeScreen>
                     child: ListTile(
                       leading: Icon(
                         running ? Icons.monitor_heart : Icons.pause_circle_outline,
-                        color: running ? Colors.green : Colors.grey,
+                        color: running
+                            ? Theme.of(context).extension<RhmUiTokens>()!.success
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                         size: 30,
                       ),
                       title: Text(running ? 'مراقبة Android تعمل' : 'مراقبة Android متوقفة'),
@@ -372,7 +375,10 @@ class _RhmAndroidRuntimeScreenState extends State<RhmAndroidRuntimeScreen>
                     const SizedBox(height: 6),
                     Text(
                       'آخر فحص: ${_status.lastApiCheckAt!.toLocal()}',
-                      style: const TextStyle(fontSize: 11, color: Colors.black54),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                       textDirection: TextDirection.ltr,
                     ),
                   ],
