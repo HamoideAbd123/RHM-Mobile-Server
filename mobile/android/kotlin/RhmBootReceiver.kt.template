@@ -15,7 +15,9 @@ class RhmBootReceiver : BroadcastReceiver() {
             "rhm_android_runtime",
             Context.MODE_PRIVATE
         )
-        if (!prefs.getBoolean("autostart_after_boot", false)) return
+        val monitorAutostart = prefs.getBoolean("autostart_after_boot", false)
+        val backendAutostart = prefs.getBoolean("backend_autostart_after_boot", false)
+        if (!monitorAutostart && !backendAutostart) return
 
         val notificationPermissionGranted =
             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
