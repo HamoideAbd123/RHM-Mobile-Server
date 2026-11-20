@@ -1,0 +1,48 @@
+package com.rhm.rhm_mobile
+
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+
+object RhmTermuxRuntimeController {
+    private const val TERMUX_PACKAGE = "com.termux"
+    private const val RUN_COMMAND_PERMISSION = "com.termux.permission.RUN_COMMAND"
+    private const val RUN_COMMAND_ACTION = "com.termux.RUN_COMMAND"
+    private const val RUN_COMMAND_SERVICE = "com.termux.app.RunCommandService"
+    private const val COMMAND_PATH = "/data/data/com.termux/files/home/.local/bin/rhm-runtime-control"
+    private const val TERMUX_HOME = "/data/data/com.termux/files/home"
+    private val allowedActions = setOf("start", "stop", "restart", "status")
+
+    fun isInstalled(context: Context): Boolean = try {
+        context.packageManager.resolveService(runCommandIntent(), PackageManager.MATCH_DEFAULT_ONLY) != null
+    } catch (_: Exception) { false }
+
+    fun hasRunCommandPermission(context: Context): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+            context.checkSelfPermission(RUN_COMMAND_PERMISSION) == PackageManager.PERMISSION_GRANTED
+
+    fun execute(context: Context, action: String) {
+        require(allowedActions.contains(action)) { "Unsupported RHM runtime action." }
+        if (!isInstalled(context)) throw IllegalStateException("Termux غير مثبت أو لا يوفّر خدمة RUN_COMMAND.")
+        if (!hasRunCommandPermission(context)) {
+            throw SecurityException("امنح RHM إذن Run commands in Termux من إعدادات تطبيق Android.")
+        }
+        val intent = runCommandIntent().apply {
+            putExtra("com.termux.RUN_COMMAND_PATH", COMMAND_PATH)
+            putExtra("com.termux.RUN_COMMAND_ARGUMENTS", arrayOf(action))
+            putExtra("com.termux.RUN_COMMAND_WORKDIR", TERMUX_HOME)
+            putExtra("com.termux.RUN_COMMAND_BACKGROUND", true)
+            putExtra("com.termux.RUN_COMMAND_SESSION_ACTION", "0")
+        }
+        try {
+            context.startService(intent)
+        } catch (error: SecurityException) {
+            throw SecurityException("رفض Termux أمر التشغيل. تحقق من إذن RUN_COMMAND وإعداد allow-external-apps.", error)
+        }
+    }
+
+    private fun runCommandIntent(): Intent =
+        Intent(RUN_COMMAND_ACTION).setComponent(ComponentName(TERMUX_PACKAGE, RUN_COMMAND_SERVICE))
+}
