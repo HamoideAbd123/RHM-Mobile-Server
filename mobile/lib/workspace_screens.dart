@@ -604,7 +604,15 @@ class _RhmAgentScreenState extends State<RhmAgentScreen> {
       const SizedBox(height: 10),
       FilledButton.icon(
         onPressed: _running ? null : _run,
-        icon: _running ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.play_arrow_rounded),
+        icon: _running
+            ? SizedBox.square(
+                dimension: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              )
+            : const Icon(Icons.play_arrow_rounded),
         label: Text(_running ? 'الوكيل يعمل…' : 'تشغيل الوكيل'),
       ),
       if (_error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error))),
