@@ -74,7 +74,7 @@ abstract final class RhmTheme {
         surfaceRaised: const Color(0xfff3f5f1),
         sidebar: const Color(0xfff0f2ee),
         foreground: const Color(0xff202521),
-        muted: const Color(0xff727c74),
+        muted: const Color(0xff667266),
         primary: const Color(0xff345f40),
         onPrimary: const Color(0xffffffff),
         secondary: const Color(0xffe9ece7),
