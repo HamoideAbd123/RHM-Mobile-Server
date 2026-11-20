@@ -11,6 +11,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 import 'package:uuid/uuid.dart';
 
 import 'api_client.dart';
+import 'android_runtime_bridge.dart';
 import 'update_service.dart';
 import 'server_update_notifications.dart';
 import 'server_update_screen.dart';
@@ -467,6 +468,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _syncAndroidHealthToken(String token) async {
+    try {
+      await RhmAndroidRuntimeBridge().setHealthToken(token);
+    } catch (_) {
+      // The primary Flutter secure-storage credential remains authoritative.
+      // Native health monitoring will show token_missing until synchronization works.
+    }
+  }
+
   Future<void> _restoreConnection() async {
     String? savedUrl;
     String? token;
@@ -511,6 +521,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
     try {
       await api.checkConnection();
+      await _syncAndroidHealthToken(token);
       if (!mounted) return;
       setState(() => _connectionReady = true);
       await RhmServerUpdateNotifications.instance.prime(api);
@@ -563,6 +574,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     });
     try {
       await api.checkConnection();
+      final savedToken = await _storage.read(key: _tokenKey);
+      if (savedToken != null && savedToken.isNotEmpty) {
+        await _syncAndroidHealthToken(savedToken);
+      }
       if (!mounted) return;
       setState(() {
         _connectionReady = true;
@@ -696,6 +711,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         // Store only after the server has accepted the token.
         await _storage.write(key: _serverKey, value: requestedUrl);
         await _storage.write(key: _tokenKey, value: enteredToken);
+        await _syncAndroidHealthToken(enteredToken);
         final previous = _api;
         _api = candidate;
         _activeServerUrl = requestedUrl;
