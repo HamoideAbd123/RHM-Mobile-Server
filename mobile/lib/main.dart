@@ -1879,7 +1879,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   _loadingProviders ? 'جارٍ التحديث…' : 'تحديث النماذج',
                 ),
                 style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(44),
+                  minimumSize: const Size.fromHeight(RhmDesignTokens.minimumTouchTarget),
                 ),
               ),
               const SizedBox(height: 18),
@@ -2742,7 +2742,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       children: [
                         IconButton(
                           tooltip: 'إيقاف القراءة الصوتية',
-                          visualDensity: VisualDensity.compact,
+                          visualDensity: VisualDensity.standard,
                           onPressed: _speaking ? _stopSpeaking : null,
                           icon: Icon(
                             Icons.volume_off_outlined,
