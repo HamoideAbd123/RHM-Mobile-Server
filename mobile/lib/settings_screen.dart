@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'api_client.dart';
+import 'rhm_theme.dart';
 
 class RhmSettingsScreen extends StatelessWidget {
   const RhmSettingsScreen({
@@ -105,7 +106,9 @@ class RhmSettingsScreen extends StatelessWidget {
             child: ListTile(
               leading: Icon(
                 connectionReady ? Icons.cloud_done_outlined : Icons.cloud_off_outlined,
-                color: connectionReady ? Colors.green : Theme.of(context).colorScheme.onSurfaceVariant,
+                color: connectionReady
+                    ? Theme.of(context).extension<RhmUiTokens>()!.success
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               title: Text(connectionReady ? 'الخادم متصل' : 'الخادم غير متصل'),
               subtitle: Text(serverUrl, textDirection: TextDirection.ltr),
