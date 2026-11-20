@@ -1,5 +1,39 @@
 import 'package:material_ui/material_ui.dart';
 
+/// Canonical spacing, layout, shape and motion scales shared by mobile screens.
+abstract final class RhmDesignTokens {
+  static const spacing4 = 4.0;
+  static const spacing8 = 8.0;
+  static const spacing12 = 12.0;
+  static const spacing16 = 16.0;
+  static const spacing20 = 20.0;
+  static const spacing24 = 24.0;
+  static const spacing32 = 32.0;
+  static const spacing40 = 40.0;
+  static const spacing48 = 48.0;
+
+  static const radiusSmall = 8.0;
+  static const radiusControl = 10.0;
+  static const radiusCard = 12.0;
+  static const radiusDialog = 16.0;
+  static const radiusPill = 999.0;
+
+  static const elevationFlat = 0.0;
+  static const elevationFloating = 3.0;
+  static const elevationModal = 8.0;
+
+  static const motionFast = Duration(milliseconds: 160);
+  static const motionStandard = Duration(milliseconds: 220);
+  static const motionSlow = Duration(milliseconds: 320);
+
+  static const mobileGutter = 12.0;
+  static const contentGutter = 22.0;
+  static const contentMaxWidth = 1040.0;
+  static const sidebarWidth = 280.0;
+  static const tabletBreakpoint = 720.0;
+  static const minimumTouchTarget = 48.0;
+}
+
 /// Semantic mobile tokens mapped from the RHM Web design system.
 @immutable
 class RhmUiTokens extends ThemeExtension<RhmUiTokens> {
@@ -101,7 +135,7 @@ abstract final class RhmTheme {
         onSecondary: const Color(0xffe7eae5),
         accentSoft: const Color(0xff292e2a),
         border: const Color(0xff2a2e2b),
-        danger: const Color(0xffd76860),
+        danger: const Color(0xff8d3936),
         success: const Color(0xff80b993),
         warning: const Color(0xffd7b26a),
         info: const Color(0xff86aeca),
@@ -149,6 +183,19 @@ abstract final class RhmTheme {
     return ThemeData.from(colorScheme: scheme, useMaterial3: true).copyWith(
       scaffoldBackgroundColor: background,
       canvasColor: surface,
+      materialTapTargetSize: MaterialTapTargetSize.padded,
+      visualDensity: VisualDensity.standard,
+      textTheme: TextTheme(
+        displayLarge: TextStyle(fontSize: 32, height: 1.2, fontWeight: FontWeight.w700, color: foreground),
+        headlineSmall: TextStyle(fontSize: 20, height: 1.3, fontWeight: FontWeight.w700, color: foreground),
+        titleLarge: TextStyle(fontSize: 18, height: 1.35, fontWeight: FontWeight.w700, color: foreground),
+        titleMedium: TextStyle(fontSize: 16, height: 1.35, fontWeight: FontWeight.w600, color: foreground),
+        bodyLarge: TextStyle(fontSize: 15, height: 1.55, color: foreground),
+        bodyMedium: TextStyle(fontSize: 14, height: 1.5, color: foreground),
+        bodySmall: TextStyle(fontSize: 12, height: 1.45, color: muted),
+        labelLarge: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: foreground),
+        labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: muted),
+      ),
       dividerColor: border,
       appBarTheme: AppBarTheme(
         backgroundColor: background,
@@ -172,7 +219,7 @@ abstract final class RhmTheme {
         hintStyle: TextStyle(color: muted),
         labelStyle: TextStyle(color: muted),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(RhmDesignTokens.radiusControl),
           borderSide: BorderSide(color: border),
         ),
         enabledBorder: OutlineInputBorder(
@@ -192,11 +239,20 @@ abstract final class RhmTheme {
           borderSide: BorderSide(color: danger, width: 1.5),
         ),
       ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          minimumSize: const Size(
+            RhmDesignTokens.minimumTouchTarget,
+            RhmDesignTokens.minimumTouchTarget,
+          ),
+          tapTargetSize: MaterialTapTargetSize.padded,
+        ),
+      ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface,
         indicatorColor: accentSoft,
         elevation: 0,
-        height: 68,
+        height: 72,
       ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: background,
@@ -206,7 +262,7 @@ abstract final class RhmTheme {
       listTileTheme: ListTileThemeData(
         iconColor: muted,
         textColor: foreground,
-        minVerticalPadding: 8,
+        minVerticalPadding: RhmDesignTokens.spacing8,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       ),
       iconTheme: IconThemeData(color: muted),
