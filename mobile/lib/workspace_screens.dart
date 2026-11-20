@@ -1299,7 +1299,7 @@ class _RhmVoiceDiagnosticsScreenState extends State<RhmVoiceDiagnosticsScreen> {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(17),
-          side: const BorderSide(color: Color(0xffe8ebf3)),
+          side: BorderSide(color: Theme.of(context).extension<RhmUiTokens>()!.border),
         ),
         child: Padding(
           padding: const EdgeInsets.all(14),
