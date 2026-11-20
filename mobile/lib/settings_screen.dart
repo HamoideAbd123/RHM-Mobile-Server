@@ -12,6 +12,7 @@ class RhmSettingsScreen extends StatelessWidget {
     required this.preferredModel,
     required this.locale,
     required this.offlineRecognition,
+    required this.themeMode,
     required this.onOpenConnectionSettings,
     required this.onOpenAndroidRuntime,
     required this.onOpenVoiceDiagnostics,
@@ -20,6 +21,7 @@ class RhmSettingsScreen extends StatelessWidget {
     required this.onModelChanged,
     required this.onLocaleChanged,
     required this.onOfflineRecognitionChanged,
+    required this.onThemeModeChanged,
     this.onRefreshProviders,
   });
 
@@ -30,6 +32,7 @@ class RhmSettingsScreen extends StatelessWidget {
   final String? preferredModel;
   final String locale;
   final bool offlineRecognition;
+  final ThemeMode themeMode;
   final VoidCallback onOpenConnectionSettings;
   final VoidCallback onOpenAndroidRuntime;
   final VoidCallback onOpenVoiceDiagnostics;
@@ -39,14 +42,23 @@ class RhmSettingsScreen extends StatelessWidget {
   final ValueChanged<String?> onModelChanged;
   final ValueChanged<String> onLocaleChanged;
   final ValueChanged<bool> onOfflineRecognitionChanged;
+  final ValueChanged<ThemeMode> onThemeModeChanged;
 
   @override
   Widget build(BuildContext context) {
-    final available = providers
-        .where((provider) => provider.configured && provider.models.isNotEmpty)
-        .toList();
+    final available = <RhmProviderInfo>[];
+    final seenProviders = <String>{};
+    for (final provider in providers) {
+      if (provider.configured &&
+          provider.models.isNotEmpty &&
+          seenProviders.add(provider.provider)) {
+        available.add(provider);
+      }
+    }
     final selected = available.where((provider) => provider.provider == preferredProvider);
-    final models = selected.isEmpty ? <String>[] : selected.first.models;
+    final models = selected.isEmpty
+        ? <String>[]
+        : selected.first.models.toSet().toList(growable: false);
     final selectedProvider = available.any((provider) => provider.provider == preferredProvider)
         ? preferredProvider
         : null;
@@ -56,6 +68,38 @@ class RhmSettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
         children: [
+          const Text('المظهر', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: DropdownButtonFormField<ThemeMode>(
+                initialValue: themeMode,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'سمة التطبيق',
+                  helperText: 'تتطابق ألوان الهاتف مع نظام RHM على الويب.',
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: ThemeMode.dark,
+                    child: Text('داكن'),
+                  ),
+                  DropdownMenuItem(
+                    value: ThemeMode.light,
+                    child: Text('فاتح'),
+                  ),
+                  DropdownMenuItem(
+                    value: ThemeMode.system,
+                    child: Text('حسب إعدادات Android'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) onThemeModeChanged(value);
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
           const Text('الاتصال', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
           Card(
             child: ListTile(
