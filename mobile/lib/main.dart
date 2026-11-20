@@ -1711,8 +1711,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     });
   }
 
-  TextDirection _directionFor(String value) =>
-      RegExp(r'[\u0600-\u06ff]').hasMatch(value) ? TextDirection.rtl : TextDirection.ltr;
+  TextDirection _directionFor(String value) {
+    if (value.trim().isEmpty) return TextDirection.rtl;
+    return RegExp(r'[\u0600-\u06ff]').hasMatch(value)
+        ? TextDirection.rtl
+        : TextDirection.ltr;
+  }
 
 
   Widget _buildSidebar() {
@@ -2164,6 +2168,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.sizeOf(context).width >= 720;
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
     return Scaffold(
         drawer: _buildSidebar(),
         appBar: _selectedDestination == 0 ? AppBar(
@@ -2266,18 +2271,21 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             const SizedBox(width: 6),
           ],
         ) : null,
-        bottomNavigationBar: isWide
-            ? const _AppVersionFooter()
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  RhmPrimaryNavigation(
-                    selectedIndex: _selectedDestination,
-                    onDestinationSelected: (index) => setState(() => _selectedDestination = index),
+        bottomNavigationBar: keyboardVisible
+            ? null
+            : isWide
+                ? const _AppVersionFooter()
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      RhmPrimaryNavigation(
+                        selectedIndex: _selectedDestination,
+                        onDestinationSelected: (index) =>
+                            setState(() => _selectedDestination = index),
+                      ),
+                      const _AppVersionFooter(),
+                    ],
                   ),
-                  const _AppVersionFooter(),
-                ],
-              ),
         body: Row(
           children: [
             if (isWide)
@@ -2646,38 +2654,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           : (value) => setState(() => _selectedProjectName = value),
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            initialValue: _locale,
-                            decoration: const InputDecoration(labelText: 'لغة الصوت'),
-                            items: const [
-                              DropdownMenuItem(value: 'ar-SA', child: Text('العربية')),
-                              DropdownMenuItem(value: 'en-US', child: Text('English')),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) {
-                                setState(() => _locale = value);
-                                _persistAppPreferences();
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: SwitchListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('تعرف محلي'),
-                            value: _offlineRecognition,
-                            onChanged: (value) {
-                              setState(() => _offlineRecognition = value);
-                              _persistAppPreferences();
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
                     Container(
                       padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
                       decoration: BoxDecoration(
@@ -2716,7 +2692,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               minLines: 1,
                               maxLines: 5,
                               maxLength: 48000,
-                              textDirection: _locale.startsWith('ar') ? TextDirection.rtl : TextDirection.ltr,
+                              textDirection: _directionFor(_prompt.text),
                               decoration: const InputDecoration(
                                 hintText: 'اكتب رسالتك…',
                                 counterText: '',
