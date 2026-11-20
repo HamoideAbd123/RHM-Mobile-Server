@@ -32,7 +32,7 @@ class RhmBootReceiver : BroadcastReceiver() {
         }
 
         try {
-            RhmRuntimeService.start(context)
+            RhmRuntimeService.start(context, startBackend = backendAutostart)
         } catch (error: Exception) {
             prefs.edit()
                 .putString("last_monitor_error", error.message ?: "boot_start_failed")
