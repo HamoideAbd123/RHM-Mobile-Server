@@ -2043,7 +2043,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       );
 
   Widget _buildActivityTab() {
-    if (_api == null) return _buildConnectionRequiredScreen('النشاط');
+    if (!shouldShowMoreServerModules(
+      hasApiClient: _api != null,
+      connectionReady: _connectionReady,
+    )) {
+      return _buildConnectionRequiredScreen('النشاط');
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('النشاط')),
       body: ListView(
@@ -2203,7 +2208,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           actions: [
             IconButton(
               tooltip: 'مركز الإشعارات',
-              onPressed: _api == null ? null : () => _openWorkspace('notifications'),
+              onPressed: !_connectionReady ? null : () => _openWorkspace('notifications'),
               icon: Stack(
                 clipBehavior: Clip.none,
                 children: [
