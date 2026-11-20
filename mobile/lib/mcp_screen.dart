@@ -74,7 +74,7 @@ class _RhmMcpStatusChipState extends State<RhmMcpStatusChip> {
             color: snapshot.hasError
                 ? Theme.of(context).colorScheme.error
                 : readyCount > 0
-                    ? Colors.green
+                    ? Theme.of(context).extension<RhmUiTokens>()!.success
                     : null,
           ),
           label: const Text('MCP'),
