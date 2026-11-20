@@ -16,6 +16,7 @@ import 'server_update_notifications.dart';
 import 'server_update_screen.dart';
 import 'notifications_screen.dart';
 import 'control_center_screen.dart';
+import 'android_runtime_screen.dart';
 import 'mcp_screen.dart';
 import 'legacy_material_compatibility.dart';
 import 'markdown_table_theme.dart';
@@ -1191,6 +1192,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             locale: _locale,
             offlineRecognition: _offlineRecognition,
             onOpenConnectionSettings: _showConnectionSettings,
+            onOpenAndroidRuntime: () => _openWorkspace('android-runtime'),
             onOpenVoiceDiagnostics: () => _openWorkspace('voice'),
             onCheckAppUpdates: () => _checkForUpdates(),
             onRefreshProviders: _connectionReady ? _loadProviders : null,
@@ -1215,6 +1217,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             },
           ),
         ),
+      );
+      return;
+    }
+
+    if (section == 'android-runtime') {
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const RhmAndroidRuntimeScreen()),
       );
       return;
     }

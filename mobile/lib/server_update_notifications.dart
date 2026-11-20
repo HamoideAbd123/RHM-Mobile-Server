@@ -195,8 +195,10 @@ class RhmServerUpdateNotifications {
           .reversed
           .toList();
 
+      // Defer fresh events during quiet hours. Do not advance the seen cursor,
+      // otherwise they would be permanently skipped when quiet hours end.
+      if (_isQuietNow(preferences['quiet_hours'])) return;
       for (var i = 0; i < fresh.length; i++) {
-        if (_isQuietNow(preferences['quiet_hours'])) continue;
         await _show(fresh[i], i);
       }
       await _saveSeenIds(items

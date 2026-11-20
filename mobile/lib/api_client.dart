@@ -531,7 +531,7 @@ class RhmApiClient {
     final uri = Uri.tryParse(value.trim());
     final host = uri?.host.toLowerCase();
     final isLoopbackHost =
-        host == '127.0.0.1' || host == 'localhost' || host == '::1';
+        host == '127.0.0.1' || host == 'localhost';
     if (uri == null ||
         !(uri.scheme == 'http' || uri.scheme == 'https') ||
         !isLoopbackHost ||

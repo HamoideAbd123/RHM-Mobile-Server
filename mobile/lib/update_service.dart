@@ -171,6 +171,12 @@ class RhmUpdateService {
     final directory = await getTemporaryDirectory();
     final apk = File('${directory.path}/rhm-update-${update.version}.apk');
     await apk.writeAsBytes(apkBytes, flush: true);
-    await OpenFilex.open(apk.path);
+    final result = await OpenFilex.open(apk.path);
+    if (result.type != ResultType.done) {
+      throw FileSystemException(
+        'تعذر فتح مثبت Android: ${result.message}',
+        apk.path,
+      );
+    }
   }
 }

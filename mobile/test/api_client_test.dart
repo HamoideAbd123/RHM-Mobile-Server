@@ -14,6 +14,10 @@ void main() {
       throwsA(isA<RhmApiException>()),
     );
     expect(
+      () => RhmApiClient(serverUrl: 'http://[::1]:8000', token: token),
+      throwsA(isA<RhmApiException>()),
+    );
+    expect(
       () => RhmApiClient(serverUrl: 'http://192.168.1.5:8000', token: token),
       throwsA(isA<RhmApiException>()),
     );

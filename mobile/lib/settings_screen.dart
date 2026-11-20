@@ -13,6 +13,7 @@ class RhmSettingsScreen extends StatelessWidget {
     required this.locale,
     required this.offlineRecognition,
     required this.onOpenConnectionSettings,
+    required this.onOpenAndroidRuntime,
     required this.onOpenVoiceDiagnostics,
     required this.onCheckAppUpdates,
     required this.onProviderChanged,
@@ -30,6 +31,7 @@ class RhmSettingsScreen extends StatelessWidget {
   final String locale;
   final bool offlineRecognition;
   final VoidCallback onOpenConnectionSettings;
+  final VoidCallback onOpenAndroidRuntime;
   final VoidCallback onOpenVoiceDiagnostics;
   final VoidCallback onCheckAppUpdates;
   final VoidCallback? onRefreshProviders;
@@ -65,6 +67,17 @@ class RhmSettingsScreen extends StatelessWidget {
               subtitle: Text(serverUrl, textDirection: TextDirection.ltr),
               trailing: const Icon(Icons.chevron_left),
               onTap: onOpenConnectionSettings,
+            ),
+          ),
+          const SizedBox(height: 18),
+          const Text('النظام المحلي', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.memory_outlined),
+              title: const Text('مضيف Android المحلي'),
+              subtitle: const Text('مراقبة وإدارة خادم RHM على هذا الهاتف، حتى دون اتصال حالي.'),
+              trailing: const Icon(Icons.chevron_left),
+              onTap: onOpenAndroidRuntime,
             ),
           ),
           const SizedBox(height: 18),

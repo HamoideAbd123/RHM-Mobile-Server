@@ -96,8 +96,8 @@ if 'applicationIdSuffix = ".debug"' not in gradle_text:
 
 min_sdk_old = "minSdk = flutter.minSdkVersion"
 if min_sdk_old in gradle_text:
-    gradle_text = gradle_text.replace(min_sdk_old, "minSdk = 23", 1)
-elif "minSdk = 23" not in gradle_text:
+    gradle_text = gradle_text.replace(min_sdk_old, "minSdk = 24", 1)
+elif "minSdk = 24" not in gradle_text:
     raise SystemExit("Could not safely set minSdk to 23 in generated app Gradle file")
 
 if "isCoreLibraryDesugaringEnabled = true" not in gradle_text:
