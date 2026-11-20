@@ -23,6 +23,7 @@ class RhmRuntimeService : Service() {
     companion object {
         const val ACTION_STOP = "com.rhm.rhm_mobile.aps.STOP"
         private const val ACTION_START = "com.rhm.rhm_mobile.aps.START"
+        private const val EXTRA_START_BACKEND = "com.rhm.rhm_mobile.aps.EXTRA_START_BACKEND"
         private const val CHANNEL_ID = "rhm_local_server_monitor"
         private const val NOTIFICATION_ID = 8102
         private const val PREFS = "rhm_android_runtime"
@@ -37,8 +38,10 @@ class RhmRuntimeService : Service() {
         private const val PREF_LAST_RECOVERY_ACTION = "last_recovery_action"
         private const val PREF_EVER_HEALTHY = "api_ever_healthy"
 
-        fun start(context: Context) {
-            val intent = Intent(context, RhmRuntimeService::class.java).setAction(ACTION_START)
+        fun start(context: Context, startBackend: Boolean = false) {
+            val intent = Intent(context, RhmRuntimeService::class.java)
+                .setAction(ACTION_START)
+                .putExtra(EXTRA_START_BACKEND, startBackend)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent)
             else context.startService(intent)
         }
@@ -115,7 +118,9 @@ class RhmRuntimeService : Service() {
                 buildNotification(prefs.getString(PREF_API_HEALTH_STATE, "unknown") ?: "unknown")
             )
             startMonitoring()
-            if (prefs.getBoolean(PREF_BACKEND_AUTOSTART, false)) {
+            val shouldStartBackend = intent == null ||
+                intent.getBooleanExtra(EXTRA_START_BACKEND, false)
+            if (shouldStartBackend && prefs.getBoolean(PREF_BACKEND_AUTOSTART, false)) {
                 requestBackendCommand("start", prefs, "backend_start_failed")
             }
         } catch (_: Exception) {
