@@ -5,7 +5,7 @@ Android integration workspace for the existing RHM mobile client and the future 
 ## Current repository contents
 
 - `mobile/`: the Flutter Android client transferred from the private RHM core repository.
-- `scripts/prepare_android_project.sh`: creates the generated Android host project from the checked-in Flutter sources and Android templates.
+- `scripts/prepare_android_project.sh`: creates the Android host project from Flutter's current scaffold and applies the checked-in manifest/network-security configuration.
 - `.github/workflows/mobile-ci.yml`: runs Flutter tests and analysis, then builds an ARM64 debug APK for CI verification.
 - `docs/`: architecture, API boundary, release/signing constraints, roadmap and verified project status.
 
@@ -35,7 +35,7 @@ flutter analyze
 
 ## Prepare and build Android ARM64
 
-The repository stores Android templates rather than generated Gradle scaffolding. Generate the Android host project with:
+The repository stores Android manifest/network-security templates rather than generated Gradle scaffolding. The script preserves Flutter's current Gradle DSL and applies only the required minSdk/desugaring settings. Generate the Android host project with:
 
 ```sh
 ./scripts/prepare_android_project.sh
