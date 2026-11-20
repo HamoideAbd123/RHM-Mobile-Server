@@ -52,6 +52,14 @@ class MainActivity : FlutterActivity() {
                             result.error("termux_permission_required", "ثبّت Termux وامنح RHM إذن RUN_COMMAND أولاً.", null)
                         } else {
                             RhmRuntimeService.setBackendAutostartEnabled(this, enabled)
+                            if (enabled) {
+                                try {
+                                    RhmRuntimeService.start(this)
+                                } catch (error: Exception) {
+                                    result.error("service_start_failed", error.message, null)
+                                    return@setMethodCallHandler
+                                }
+                            }
                             result.success(null)
                         }
                     }
@@ -135,6 +143,11 @@ class MainActivity : FlutterActivity() {
 
     private fun runTermuxAction(action: String, result: MethodChannel.Result) {
         try {
+            if (action == "stop") {
+                RhmRuntimeService.setBackendAutostartEnabled(this, false)
+            } else {
+                RhmRuntimeService.start(this)
+            }
             RhmRuntimeService.runBackendCommand(this, action)
             result.success(mapOf("accepted" to true, "action" to action))
         } catch (error: SecurityException) {
