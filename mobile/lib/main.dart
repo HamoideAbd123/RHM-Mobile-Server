@@ -26,9 +26,15 @@ import 'settings_screen.dart';
 import 'workspace_screens.dart';
 import 'rhm_primary_navigation.dart';
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeRhmBackgroundNotifications();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(
+      initializeRhmBackgroundNotifications().catchError((Object error) {
+        debugPrint('RHM background notification setup failed: $error');
+      }),
+    );
+  });
   runApp(const RhmApp());
 }
 
