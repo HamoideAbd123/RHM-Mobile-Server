@@ -15,6 +15,9 @@ class RhmAndroidRuntimeStatus {
     required this.termuxPermissionGranted,
     this.lastApiCheckAt,
     this.lastError,
+    this.recoveryAttempts = 0,
+    this.lastRecoveryAt,
+    this.lastRecoveryAction,
   });
 
   final bool supported;
@@ -28,10 +31,15 @@ class RhmAndroidRuntimeStatus {
   final bool termuxPermissionGranted;
   final DateTime? lastApiCheckAt;
   final String? lastError;
+  final int recoveryAttempts;
+  final DateTime? lastRecoveryAt;
+  final String? lastRecoveryAction;
 
   factory RhmAndroidRuntimeStatus.fromMap(Map<String, dynamic> data) {
     final checkAt = data['lastApiCheckAt'];
+    final recoveryAt = data['lastRecoveryAt'];
     final error = data['lastError']?.toString() ?? '';
+    final recoveryAction = data['lastRecoveryAction']?.toString() ?? '';
     return RhmAndroidRuntimeStatus(
       supported: data['supported'] == true,
       managerRunning: data['managerRunning'] == true,
@@ -47,6 +55,14 @@ class RhmAndroidRuntimeStatus {
           ? DateTime.fromMillisecondsSinceEpoch(checkAt)
           : null,
       lastError: error.isEmpty ? null : error,
+      recoveryAttempts: data['recoveryAttempts'] is int
+          ? data['recoveryAttempts'] as int
+          : 0,
+      lastRecoveryAt: recoveryAt is int && recoveryAt > 0
+          ? DateTime.fromMillisecondsSinceEpoch(recoveryAt)
+          : null,
+      lastRecoveryAction:
+          recoveryAction.isEmpty ? null : recoveryAction,
     );
   }
 
