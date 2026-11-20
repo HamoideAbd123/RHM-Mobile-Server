@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rhm_mobile/rhm_primary_navigation.dart';
 
 void main() {
-  testWidgets('phone navigation exposes all five primary destinations', (tester) async {
+  testWidgets('phone navigation exposes the four approved destinations', (tester) async {
     var selected = 0;
     await tester.pumpWidget(
       MaterialApp(
@@ -16,12 +16,12 @@ void main() {
       ),
     );
 
-    expect(find.byType(NavigationDestination), findsNWidgets(5));
-    expect(find.text('الدردشة'), findsOneWidget);
+    expect(find.byType(NavigationDestination), findsNWidgets(4));
+    expect(find.text('المحادثات'), findsOneWidget);
     expect(find.text('المشاريع'), findsOneWidget);
     expect(find.text('النشاط'), findsOneWidget);
     expect(find.text('المزيد'), findsOneWidget);
-    expect(find.text('MCP'), findsOneWidget);
+    expect(find.text('MCP'), findsNothing);
 
     await tester.tap(find.text('المشاريع'));
     expect(selected, 1);
@@ -29,13 +29,11 @@ void main() {
     expect(selected, 2);
     await tester.tap(find.text('المزيد'));
     expect(selected, 3);
-    await tester.tap(find.text('الدردشة'));
+    await tester.tap(find.text('المحادثات'));
     expect(selected, 0);
-    await tester.tap(find.text('MCP'));
-    expect(selected, 4);
   });
 
-  testWidgets('wide navigation uses a NavigationRail', (tester) async {
+  testWidgets('wide navigation uses a NavigationRail with four destinations', (tester) async {
     var selected = 0;
     await tester.pumpWidget(
       MaterialApp(
@@ -50,6 +48,7 @@ void main() {
     );
 
     expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byType(NavigationRailDestination), findsNWidgets(4));
     await tester.tap(find.byIcon(Icons.folder_outlined));
     expect(selected, 1);
   });
