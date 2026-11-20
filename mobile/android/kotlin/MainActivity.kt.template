@@ -54,7 +54,7 @@ class MainActivity : FlutterActivity() {
                             RhmRuntimeService.setBackendAutostartEnabled(this, enabled)
                             if (enabled) {
                                 try {
-                                    RhmRuntimeService.start(this)
+                                    RhmRuntimeService.start(this, startBackend = true)
                                 } catch (error: Exception) {
                                     result.error("service_start_failed", error.message, null)
                                     return@setMethodCallHandler
@@ -146,7 +146,7 @@ class MainActivity : FlutterActivity() {
             if (action == "stop") {
                 RhmRuntimeService.setBackendAutostartEnabled(this, false)
             } else {
-                RhmRuntimeService.start(this)
+                    RhmRuntimeService.start(this, startBackend = false)
             }
             RhmRuntimeService.runBackendCommand(this, action)
             result.success(mapOf("accepted" to true, "action" to action))
