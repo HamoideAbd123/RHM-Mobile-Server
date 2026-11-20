@@ -32,6 +32,10 @@ class RhmRuntimeService : Service() {
         private const val PREF_API_REACHABLE = "api_port_reachable"
         private const val PREF_LAST_CHECK = "last_api_check_at"
         private const val PREF_LAST_ERROR = "last_monitor_error"
+        private const val PREF_RECOVERY_ATTEMPTS = "recovery_attempts"
+        private const val PREF_LAST_RECOVERY_AT = "last_recovery_at"
+        private const val PREF_LAST_RECOVERY_ACTION = "last_recovery_action"
+        private const val PREF_EVER_HEALTHY = "api_ever_healthy"
 
         fun start(context: Context) {
             val intent = Intent(context, RhmRuntimeService::class.java).setAction(ACTION_START)
@@ -48,11 +52,7 @@ class RhmRuntimeService : Service() {
         }
 
         fun setBackendAutostartEnabled(context: Context, enabled: Boolean) {
-            val prefs = preferences(context)
-            prefs.edit()
-                .putBoolean(PREF_BACKEND_AUTOSTART, enabled)
-                .putBoolean(PREF_AUTOSTART, enabled || prefs.getBoolean(PREF_AUTOSTART, false))
-                .apply()
+            preferences(context).edit().putBoolean(PREF_BACKEND_AUTOSTART, enabled).apply()
         }
 
         fun runBackendCommand(context: Context, action: String) {
@@ -86,13 +86,18 @@ class RhmRuntimeService : Service() {
                 "apiHealthState" to healthState,
                 "apiPortReachable" to (healthState == "healthy"),
                 "lastApiCheckAt" to prefs.getLong(PREF_LAST_CHECK, 0L),
-                "lastError" to (prefs.getString(PREF_LAST_ERROR, "") ?: "")
+                "lastError" to (prefs.getString(PREF_LAST_ERROR, "") ?: ""),
+                "recoveryAttempts" to prefs.getInt(PREF_RECOVERY_ATTEMPTS, 0),
+                "lastRecoveryAt" to prefs.getLong(PREF_LAST_RECOVERY_AT, 0L),
+                "lastRecoveryAction" to (prefs.getString(PREF_LAST_RECOVERY_ACTION, "") ?: "")
             )
         }
     }
 
     private val monitorExecutor = Executors.newSingleThreadScheduledExecutor()
     private var monitorTask: ScheduledFuture<*>? = null
+    private var consecutiveUnavailableChecks = 0
+    private var recoveryInProgress = false
 
     override fun onCreate() {
         super.onCreate()
@@ -106,15 +111,12 @@ class RhmRuntimeService : Service() {
         }
         try {
             val prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            promoteToForeground(buildNotification(prefs.getString(PREF_API_HEALTH_STATE, "unknown") ?: "unknown"))
+            promoteToForeground(
+                buildNotification(prefs.getString(PREF_API_HEALTH_STATE, "unknown") ?: "unknown")
+            )
             startMonitoring()
             if (prefs.getBoolean(PREF_BACKEND_AUTOSTART, false)) {
-                try {
-                    RhmTermuxRuntimeController.execute(applicationContext, "start")
-                    prefs.edit().putString(PREF_LAST_ERROR, "").apply()
-                } catch (_: Exception) {
-                    prefs.edit().putString(PREF_LAST_ERROR, "termux_autostart_failed").apply()
-                }
+                requestBackendCommand("start", prefs, "backend_start_failed")
             }
         } catch (_: Exception) {
             getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -127,28 +129,120 @@ class RhmRuntimeService : Service() {
 
     private fun promoteToForeground(notification: Notification) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        } else startForeground(NOTIFICATION_ID, notification)
+            startForeground(
+                NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            )
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
     }
 
     private fun startMonitoring() {
         if (monitorTask != null) return
-        monitorTask = monitorExecutor.scheduleWithFixedDelay({
-            val healthState = authenticatedFastApiHealth()
-            val prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            prefs.edit()
-                .putString(PREF_API_HEALTH_STATE, healthState)
-                .putBoolean(PREF_API_REACHABLE, healthState == "healthy")
-                .putLong(PREF_LAST_CHECK, System.currentTimeMillis())
-                .putString(PREF_LAST_ERROR, when (healthState) {
-                    "healthy" -> ""
-                    "token_missing" -> "health_token_missing"
-                    "unauthorized" -> "fastapi_unauthorized"
-                    else -> "fastapi_unavailable"
-                }).apply()
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.notify(NOTIFICATION_ID, buildNotification(healthState))
-        }, 0, 20, TimeUnit.SECONDS)
+        monitorTask = monitorExecutor.scheduleWithFixedDelay(
+            { runHealthCheckSafely() },
+            10,
+            20,
+            TimeUnit.SECONDS
+        )
+    }
+
+    private fun runHealthCheckSafely() {
+        val prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val healthState = try {
+            authenticatedFastApiHealth()
+        } catch (_: Exception) {
+            "unavailable"
+        }
+
+        prefs.edit()
+            .putString(PREF_API_HEALTH_STATE, healthState)
+            .putBoolean(PREF_API_REACHABLE, healthState == "healthy")
+            .putLong(PREF_LAST_CHECK, System.currentTimeMillis())
+            .apply()
+
+        when (healthState) {
+            "healthy" -> {
+                consecutiveUnavailableChecks = 0
+                prefs.edit()
+                    .putBoolean(PREF_EVER_HEALTHY, true)
+                    .putInt(PREF_RECOVERY_ATTEMPTS, 0)
+                    .putString(PREF_LAST_ERROR, "")
+                    .apply()
+            }
+            "unavailable" -> {
+                consecutiveUnavailableChecks += 1
+                prefs.edit().putString(PREF_LAST_ERROR, "fastapi_unavailable").apply()
+                maybeRecoverBackend(prefs)
+            }
+            "unauthorized" -> {
+                consecutiveUnavailableChecks = 0
+                prefs.edit().putString(PREF_LAST_ERROR, "fastapi_unauthorized").apply()
+            }
+            "token_missing" -> {
+                consecutiveUnavailableChecks = 0
+                prefs.edit().putString(PREF_LAST_ERROR, "health_token_missing").apply()
+            }
+            else -> {
+                consecutiveUnavailableChecks = 0
+                prefs.edit().putString(PREF_LAST_ERROR, "fastapi_invalid_health_response").apply()
+            }
+        }
+
+        val currentState = prefs.getString(PREF_API_HEALTH_STATE, "unknown") ?: "unknown"
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(NOTIFICATION_ID, buildNotification(currentState))
+    }
+
+    private fun maybeRecoverBackend(prefs: android.content.SharedPreferences) {
+        if (!prefs.getBoolean(PREF_BACKEND_AUTOSTART, false) || recoveryInProgress) return
+
+        val everHealthy = prefs.getBoolean(PREF_EVER_HEALTHY, false)
+        val requiredFailures = if (everHealthy) 2 else 5
+        if (consecutiveUnavailableChecks < requiredFailures) return
+
+        val attempts = prefs.getInt(PREF_RECOVERY_ATTEMPTS, 0)
+        val delayMs = when (attempts) {
+            0 -> 30_000L
+            1 -> 60_000L
+            2 -> 120_000L
+            else -> 300_000L
+        }
+        val now = System.currentTimeMillis()
+        val lastRecoveryAt = prefs.getLong(PREF_LAST_RECOVERY_AT, 0L)
+        if (now - lastRecoveryAt < delayMs) return
+
+        val action = if (attempts == 0 && !everHealthy) "start" else "restart"
+        recoveryInProgress = true
+        prefs.edit()
+            .putLong(PREF_LAST_RECOVERY_AT, now)
+            .putInt(PREF_RECOVERY_ATTEMPTS, attempts + 1)
+            .putString(PREF_LAST_RECOVERY_ACTION, action)
+            .putString(PREF_LAST_ERROR, "backend_recovery_requested")
+            .apply()
+
+        try {
+            RhmTermuxRuntimeController.execute(applicationContext, action)
+        } catch (_: Exception) {
+            prefs.edit().putString(PREF_LAST_ERROR, "termux_recovery_failed").apply()
+        } finally {
+            recoveryInProgress = false
+        }
+    }
+
+    private fun requestBackendCommand(
+        action: String,
+        prefs: android.content.SharedPreferences,
+        errorCode: String
+    ) {
+        try {
+            RhmTermuxRuntimeController.execute(applicationContext, action)
+            prefs.edit().putString(PREF_LAST_ERROR, "").apply()
+        } catch (_: Exception) {
+            prefs.edit().putString(PREF_LAST_ERROR, errorCode).apply()
+        }
     }
 
     private fun authenticatedFastApiHealth(): String {
@@ -170,8 +264,10 @@ class RhmRuntimeService : Service() {
             } else {
                 val body = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
                 val payload = JSONObject(body)
-                if (payload.optString("status") == "ok" && payload.optString("transport") == "loopback") "healthy"
-                else "invalid_response"
+                if (
+                    payload.optString("status") == "ok" &&
+                    payload.optString("transport") == "loopback"
+                ) "healthy" else "invalid_response"
             }
         } catch (_: Exception) {
             "unavailable"
@@ -182,11 +278,14 @@ class RhmRuntimeService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_ID, "مراقبة خادم RHM المحلي", NotificationManager.IMPORTANCE_LOW)
-                .apply {
-                    description = "يعرض نتيجة فحص FastAPI المحلي مع المصادقة."
-                    setShowBadge(false)
-                }
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "مراقبة خادم RHM المحلي",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "يعرض نتيجة فحص FastAPI المحلي مع المصادقة والتعافي التلقائي."
+                setShowBadge(false)
+            }
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)
         }
@@ -202,21 +301,27 @@ class RhmRuntimeService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val text = when (healthState) {
-            "healthy" -> "FastAPI جاهز: فحص المصادقة نجح."
+            "healthy" -> "FastAPI جاهز: فحص المصادقة ناجح."
             "unauthorized" -> "FastAPI رفض رمز الوصول المحفوظ."
             "token_missing" -> "بانتظار مزامنة رمز الوصول الآمن."
             "invalid_response" -> "استجابة فحص FastAPI غير صالحة."
-            else -> "FastAPI غير متاح على 127.0.0.1:8000."
+            else -> "FastAPI غير متاح؛ خدمة RHM تراقبه وتحاول استعادته."
         }
-        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.Builder(this, CHANNEL_ID)
-        else Notification.Builder(this)
+        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(this, CHANNEL_ID)
+        } else {
+            Notification.Builder(this)
+        }
         return builder
             .setSmallIcon(android.R.drawable.ic_menu_info_details)
             .setContentTitle("RHM — مراقبة FastAPI المحلية")
             .setContentText(text)
-            .setStyle(Notification.BigTextStyle().bigText(
-                "$text يعتمد الفحص على GET /mobile/health مع Bearer token. لا يثبت جاهزية PostgreSQL أو مزود النماذج."
-            ))
+            .setStyle(
+                Notification.BigTextStyle().bigText(
+                    "$text الفحص كل 20 ثانية عبر GET /mobile/health مع Bearer token. " +
+                        "لا يثبت هذا وحده جاهزية PostgreSQL أو مزوّد النماذج."
+                )
+            )
             .setContentIntent(openAppPendingIntent)
             .setCategory(Notification.CATEGORY_SERVICE)
             .setPriority(Notification.PRIORITY_LOW)
