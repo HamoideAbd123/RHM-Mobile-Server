@@ -2148,14 +2148,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xff20b486), Color(0xff087b5b)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(15),
+                  color: Theme.of(context).colorScheme.primary,
+                  borderRadius: BorderRadius.circular(13),
                 ),
-                child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 23),
+                child: Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  size: 23,
+                ),
               ),
               const SizedBox(width: 11),
               Expanded(
@@ -2163,8 +2163,17 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('RHM', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, letterSpacing: .2)),
-                    SizedBox(height: 2),
-                    Text(_conversationTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: Color(0xff7b8192), fontWeight: FontWeight.w400)),
+                    const SizedBox(height: 2),
+                    Text(
+                      _conversationTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -2273,8 +2282,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             color: _error != null
                                 ? Theme.of(context).colorScheme.error
                                 : _connectionReady
-                                    ? const Color(0xff20a66a)
-                                    : const Color(0xffc58b36),
+                                    ? Theme.of(context).extension<RhmUiTokens>()!.success
+                                    : Theme.of(context).extension<RhmUiTokens>()!.warning,
                           ),
                         ),
                         const SizedBox(width: 7),
@@ -2282,7 +2291,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           child: Text(
                             _error ?? _status,
                             style: TextStyle(
-                              color: _error == null ? const Color(0xff737b8e) : Theme.of(context).colorScheme.error,
+                              color: _error == null
+                                  ? Theme.of(context).colorScheme.onSurfaceVariant
+                                  : Theme.of(context).colorScheme.error,
                               fontSize: 12,
                             ),
                           ),
@@ -2334,22 +2345,34 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 width: 76,
                                 height: 76,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xffe5f5ef),
+                                  color: Theme.of(context).extension<RhmUiTokens>()!.accentSoft,
                                   borderRadius: BorderRadius.circular(26),
                                 ),
-                                child: const Icon(Icons.forum_rounded, size: 36, color: Color(0xff159b72)),
+                                child: Icon(
+                                  Icons.forum_rounded,
+                                  size: 36,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                               ),
                               const SizedBox(height: 20),
                               const Text(
                                 'أهلًا بك في RHM',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800, color: Color(0xff20263a)),
+                                style: TextStyle(
+                                  fontSize: 23,
+                                  fontWeight: FontWeight.w800,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
                               ),
                               const SizedBox(height: 8),
                               const Text(
                                 'أنا مساعدك الشخصي. اسألني، خطّط لمشاريعك، أو ابدأ محادثة صوتية.',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 14, height: 1.7, color: Color(0xff777f92)),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  height: 1.7,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
                               ),
                               const SizedBox(height: 22),
                               Wrap(
@@ -2368,8 +2391,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       );
                     }
                     final message = _messages[messageIndex];
-                    final bubbleColor = message.isUser ? const Color(0xff159b72) : Colors.white;
-                    final textColor = message.isUser ? Colors.white : const Color(0xff252b3b);
+                    final colorScheme = Theme.of(context).colorScheme;
+                    final bubbleColor = message.isUser
+                        ? colorScheme.primary
+                        : colorScheme.surface;
+                    final textColor = message.isUser
+                        ? colorScheme.onPrimary
+                        : colorScheme.onSurface;
                     return Padding(
                       padding: EdgeInsets.only(
                         left: message.isUser ? 42 : 0,
@@ -2413,11 +2441,31 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                             styleSheet: MarkdownStyleSheet(
                                               a: TextStyle(color: Theme.of(context).colorScheme.primary),
                                               pPadding: EdgeInsets.zero,
-                                              p: const TextStyle(fontSize: 15, height: 1.6, color: Color(0xff252b3b)),
-                                              h1: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: Color(0xff20263a)),
-                                              h2: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xff20263a)),
-                                              h3: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xff20263a)),
-                                              code: const TextStyle(fontSize: 13, fontFamily: 'monospace', color: Color(0xff175c47)),
+                                              p: TextStyle(
+                                                fontSize: 15,
+                                                height: 1.6,
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                              ),
+                                              h1: TextStyle(
+                                                fontSize: 21,
+                                                fontWeight: FontWeight.w800,
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                              ),
+                                              h2: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w700,
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                              ),
+                                              h3: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w700,
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                              ),
+                                              code: TextStyle(
+                                                fontSize: 13,
+                                                fontFamily: 'monospace',
+                                                color: Theme.of(context).colorScheme.primary,
+                                              ),
                                               h1Padding: EdgeInsets.zero,
                                               h2Padding: EdgeInsets.zero,
                                               h3Padding: EdgeInsets.zero,
@@ -2651,7 +2699,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         const Flexible(
                           child: Text(
                             'قد تحتاج الردود إلى اتصال بخادم RHM.',
-                            style: TextStyle(fontSize: 11, color: Color(0xff9299a9)),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -2668,11 +2719,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       : RhmProjectsScreen(api: _api!),
                   _buildActivityTab(),
                   _buildMoreTab(),
-                  _selectedDestination == 4
-                      ? (_api == null
-                          ? _buildConnectionRequiredScreen('MCP')
-                          : RhmMcpScreen(api: _api!))
-                      : const SizedBox.shrink(),
                 ],
               ),
             ),
@@ -2698,9 +2744,13 @@ class _AppVersionFooterState extends State<_AppVersionFooter> {
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: const BoxDecoration(
-            color: Color(0xfff7f8fc),
-            border: Border(top: BorderSide(color: Color(0xffe8ebf3))),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            border: Border(
+              top: BorderSide(
+                color: Theme.of(context).extension<RhmUiTokens>()!.border,
+              ),
+            ),
           ),
           child: FutureBuilder<PackageInfo>(
             future: _packageInfo,
@@ -2712,9 +2762,9 @@ class _AppVersionFooterState extends State<_AppVersionFooter> {
               return Text(
                 'RHM  •  $version  •  © ${DateTime.now().year}',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
-                  color: Color(0xff9299a9),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   letterSpacing: .2,
                 ),
               );
