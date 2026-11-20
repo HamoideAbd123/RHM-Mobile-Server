@@ -47,6 +47,7 @@ class RhmSettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var selectedThemeMode = themeMode;
     final available = <RhmProviderInfo>[];
     final seenProviders = <String>{};
     for (final provider in providers) {
@@ -73,30 +74,35 @@ class RhmSettingsScreen extends StatelessWidget {
           Card(
             child: Padding(
               padding: const EdgeInsets.all(14),
-              child: DropdownButtonFormField<ThemeMode>(
-                initialValue: themeMode,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'سمة التطبيق',
-                  helperText: 'تتطابق ألوان الهاتف مع نظام RHM على الويب.',
+              child: StatefulBuilder(
+                builder: (context, setThemeState) =>
+                    DropdownButtonFormField<ThemeMode>(
+                  initialValue: selectedThemeMode,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'سمة التطبيق',
+                    helperText: 'تتطابق ألوان الهاتف مع نظام RHM على الويب.',
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: ThemeMode.dark,
+                      child: Text('داكن'),
+                    ),
+                    DropdownMenuItem(
+                      value: ThemeMode.light,
+                      child: Text('فاتح'),
+                    ),
+                    DropdownMenuItem(
+                      value: ThemeMode.system,
+                      child: Text('حسب إعدادات Android'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setThemeState(() => selectedThemeMode = value);
+                    onThemeModeChanged(value);
+                  },
                 ),
-                items: const [
-                  DropdownMenuItem(
-                    value: ThemeMode.dark,
-                    child: Text('داكن'),
-                  ),
-                  DropdownMenuItem(
-                    value: ThemeMode.light,
-                    child: Text('فاتح'),
-                  ),
-                  DropdownMenuItem(
-                    value: ThemeMode.system,
-                    child: Text('حسب إعدادات Android'),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null) onThemeModeChanged(value);
-                },
               ),
             ),
           ),
