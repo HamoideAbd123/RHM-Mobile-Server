@@ -299,7 +299,7 @@ class _RhmTasksScreenState extends State<RhmTasksScreen> {
                   PopupMenuItem(value: 'done', child: Text('مكتملة')),
                   PopupMenuItem(value: 'cancelled', child: Text('ملغاة')),
                 ],
-                child: Chip(label: Text(_label(task.status)), side: BorderSide.none, backgroundColor: const Color(0xffe5f5ef)),
+                child: Chip(label: Text(_label(task.status)), side: BorderSide.none, backgroundColor: Theme.of(context).extension<RhmUiTokens>()!.accentSoft),
               ),
             ));
           },
@@ -531,7 +531,7 @@ class _RhmMemoriesScreenState extends State<RhmMemoriesScreen> {
                       ),
                     ],
                     const SizedBox(height: 6),
-                    Text('الأهمية ${(memory.importance * 100).round()}% · الثقة ${(memory.confidence * 100).round()}%', style: const TextStyle(fontSize: 11, color: Colors.black54)),
+                    Text('الأهمية ${(memory.importance * 100).round()}% · الثقة ${(memory.confidence * 100).round()}%', style: TextStyle(fontSize: 11, color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
                   ]),
                 ));
               },
@@ -616,7 +616,7 @@ class _RhmAgentScreenState extends State<RhmAgentScreen> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             const Text('النتيجة', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 6),
-            Text('${_reply!.provider} · ${_reply!.model} · ${_reply!.toolCalls} استدعاء أداة', style: const TextStyle(fontSize: 11, color: Colors.black54)),
+            Text('${_reply!.provider} · ${_reply!.model} · ${_reply!.toolCalls} استدعاء أداة', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
             const Divider(height: 22),
             SelectableText(_reply!.content, style: const TextStyle(height: 1.6)),
           ]),
@@ -793,7 +793,7 @@ class _RhmDevicesScreenState extends State<RhmDevicesScreen> {
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(color: Color(0xffe8ebf3)),
+                  side: BorderSide(color: Theme.of(context).extension<RhmUiTokens>()!.border),
                 ),
                 child: ListTile(
                   leading: CircleAvatar(
@@ -1157,7 +1157,7 @@ class _RhmVoiceDiagnosticsScreenState extends State<RhmVoiceDiagnosticsScreen> {
                 children: [
                   Card(
                     elevation: 0,
-                    color: const Color(0xffeef7f3),
+                    color: Theme.of(context).extension<RhmUiTokens>()!.accentSoft,
                     child: Padding(
                       padding: const EdgeInsets.all(14),
                       child: Text(_status, style: const TextStyle(height: 1.5)),
@@ -1282,7 +1282,7 @@ class _RhmVoiceDiagnosticsScreenState extends State<RhmVoiceDiagnosticsScreen> {
                   const SizedBox(height: 12),
                   const Text(
                     'ملاحظة: تطبيق RHM يستخدم محركات Android المثبتة ولا يضمّن أصواتًا أو نموذج تعرف صوتي داخل APK. عدم توفر صوت محلي لا يعني بالضرورة تعذر استخدام صوت متصل بالشبكة.',
-                    style: TextStyle(fontSize: 12, color: Colors.black54, height: 1.5),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
                   ),
                 ],
               ),
