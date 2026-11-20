@@ -25,6 +25,7 @@ import 'more_tab_availability.dart';
 import 'settings_screen.dart';
 import 'workspace_screens.dart';
 import 'rhm_primary_navigation.dart';
+import 'rhm_theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,46 +39,75 @@ void main() {
   runApp(const RhmApp());
 }
 
-class RhmApp extends StatelessWidget {
+class RhmApp extends StatefulWidget {
   const RhmApp({super.key});
+
+  @override
+  State<RhmApp> createState() => _RhmAppState();
+}
+
+class _RhmAppState extends State<RhmApp> {
+  static const _themeModeKey = 'rhm_theme_mode';
+  static const _storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      resetOnError: false,
+      migrateOnAlgorithmChange: true,
+      migrateWithBackup: true,
+    ),
+  );
+
+  ThemeMode _themeMode = ThemeMode.dark;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_restoreThemeMode());
+  }
+
+  Future<void> _restoreThemeMode() async {
+    try {
+      final saved = await _storage.read(key: _themeModeKey);
+      final restored = switch (saved) {
+        'light' => ThemeMode.light,
+        'system' => ThemeMode.system,
+        'dark' => ThemeMode.dark,
+        _ => ThemeMode.dark,
+      };
+      if (mounted) setState(() => _themeMode = restored);
+    } catch (error) {
+      debugPrint('RHM appearance preference could not be restored: $error');
+    }
+  }
+
+  Future<void> _setThemeMode(ThemeMode value) async {
+    setState(() => _themeMode = value);
+    final storedValue = switch (value) {
+      ThemeMode.light => 'light',
+      ThemeMode.system => 'system',
+      ThemeMode.dark => 'dark',
+    };
+    try {
+      await _storage.write(key: _themeModeKey, value: storedValue);
+    } catch (error) {
+      debugPrint('RHM appearance preference could not be saved: $error');
+    }
+  }
 
   @override
   Widget build(BuildContext context) => MaterialApp(
         title: 'RHM',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xff159b72),
-            brightness: Brightness.light,
-          ),
-          scaffoldBackgroundColor: const Color(0xfff7f8fc),
-          useMaterial3: true,
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xfff7f8fc),
-            surfaceTintColor: Colors.transparent,
-            elevation: 0,
-            centerTitle: false,
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(24),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(24),
-              borderSide: const BorderSide(color: Color(0xffe6e9f2)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(24),
-              borderSide: const BorderSide(color: Color(0xff159b72), width: 1.4),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        theme: RhmTheme.light,
+        darkTheme: RhmTheme.dark,
+        themeMode: _themeMode,
+        builder: (context, child) => wrapLegacyMaterialWidgets(child!),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: ChatScreen(
+            themeMode: _themeMode,
+            onThemeModeChanged: _setThemeMode,
           ),
         ),
-        builder: (context, child) => wrapLegacyMaterialWidgets(child!),
-        home: const Directionality(textDirection: TextDirection.rtl, child: ChatScreen()),
       );
 }
 
@@ -113,7 +143,14 @@ class _SuggestionChip extends StatelessWidget {
 }
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  const ChatScreen({
+    super.key,
+    required this.themeMode,
+    required this.onThemeModeChanged,
+  });
+
+  final ThemeMode themeMode;
+  final ValueChanged<ThemeMode> onThemeModeChanged;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -1213,6 +1250,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             preferredModel: _preferredModel,
             locale: _locale,
             offlineRecognition: _offlineRecognition,
+            themeMode: widget.themeMode,
+            onThemeModeChanged: widget.onThemeModeChanged,
             onOpenConnectionSettings: _showConnectionSettings,
             onOpenAndroidRuntime: () => _openWorkspace('android-runtime'),
             onOpenVoiceDiagnostics: () => _openWorkspace('voice'),
