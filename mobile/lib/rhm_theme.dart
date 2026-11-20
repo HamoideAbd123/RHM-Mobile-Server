@@ -223,19 +223,19 @@ abstract final class RhmTheme {
           borderSide: BorderSide(color: border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(RhmDesignTokens.radiusControl),
           borderSide: BorderSide(color: border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(RhmDesignTokens.radiusControl),
           borderSide: BorderSide(color: primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(RhmDesignTokens.radiusControl),
           borderSide: BorderSide(color: danger),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(RhmDesignTokens.radiusControl),
           borderSide: BorderSide(color: danger, width: 1.5),
         ),
       ),
@@ -246,6 +246,34 @@ abstract final class RhmTheme {
             RhmDesignTokens.minimumTouchTarget,
           ),
           tapTargetSize: MaterialTapTargetSize.padded,
+        ),
+      ),
+      drawerTheme: DrawerThemeData(
+        backgroundColor: sidebar,
+        surfaceTintColor: Colors.transparent,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          minimumSize: const Size.fromHeight(RhmDesignTokens.minimumTouchTarget),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(RhmDesignTokens.radiusControl),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(RhmDesignTokens.minimumTouchTarget),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(RhmDesignTokens.radiusControl),
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          minimumSize: const Size.fromHeight(RhmDesignTokens.minimumTouchTarget),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(RhmDesignTokens.radiusControl),
+          ),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
