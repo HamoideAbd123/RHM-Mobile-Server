@@ -2167,7 +2167,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.sizeOf(context).width >= 720;
+    final isWide = MediaQuery.sizeOf(context).width >= RhmDesignTokens.tabletBreakpoint;
     final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
     return Scaffold(
         drawer: _buildSidebar(),
@@ -2587,8 +2587,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                         ),
                                         const SizedBox(width: 4),
                                         IconButton(
-                                          visualDensity: VisualDensity.compact,
-                                          constraints: const BoxConstraints(minWidth: 32, minHeight: 30),
+                                          visualDensity: VisualDensity.standard,
+                                          constraints: const BoxConstraints(
+                                            minWidth: RhmDesignTokens.minimumTouchTarget,
+                                            minHeight: RhmDesignTokens.minimumTouchTarget,
+                                          ),
                                           padding: EdgeInsets.zero,
                                           tooltip: 'قراءة الرد',
                                           onPressed: () => _speakResponse(message.text),
@@ -2712,7 +2715,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               backgroundColor: Theme.of(context).colorScheme.primary,
                               foregroundColor: Theme.of(context).colorScheme.onPrimary,
                               disabledBackgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                              minimumSize: const Size(46, 46),
+                              minimumSize: const Size(
+                                RhmDesignTokens.minimumTouchTarget,
+                                RhmDesignTokens.minimumTouchTarget,
+                              ),
                             ),
                             icon: _busy
                                 ? SizedBox.square(
