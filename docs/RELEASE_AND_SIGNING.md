@@ -2,7 +2,7 @@
 
 ## Current state
 
-The imported app manifest declares package version `0.1.10+11`. The private source workflow previously built a signed ARM64 release using four repository Actions secrets:
+The imported app manifest declares package version `0.1.10+11`. The private source workflow generates the Android project using `--org com.rhm --project-name rhm_mobile`, which yields the expected application ID `com.rhm.rhm_mobile`; this is the project build configuration to preserve. The exact ID and signer fingerprint still must be checked against the APK installed on the target phone before publishing an update. The private source workflow previously built a signed ARM64 release using four repository Actions secrets:
 
 - `RHM_ANDROID_KEYSTORE_BASE64`
 - `RHM_ANDROID_STORE_PASSWORD`

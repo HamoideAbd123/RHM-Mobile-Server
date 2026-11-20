@@ -22,7 +22,7 @@ if [[ -e "${ANDROID_PROJECT}" ]]; then
 fi
 
 mkdir -p "$(dirname -- "${ANDROID_PROJECT}")"
-flutter create --platforms=android --org org.rhm --project-name rhm_mobile "${ANDROID_PROJECT}"
+flutter create --platforms=android --org com.rhm --project-name rhm_mobile "${ANDROID_PROJECT}"
 
 cp "${MOBILE_DIR}/pubspec.yaml" "${ANDROID_PROJECT}/pubspec.yaml"
 cp "${MOBILE_DIR}/analysis_options.yaml" "${ANDROID_PROJECT}/analysis_options.yaml"

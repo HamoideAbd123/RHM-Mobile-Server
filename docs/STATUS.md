@@ -72,3 +72,10 @@ Correction committed in the follow-up on this branch:
 - fail fast if any required setting cannot be patched safely.
 
 The next CI run must prove the correction by completing the ARM64 debug build. The old `mobile/android/app-build.gradle.kts.template` is retained as a source reference only and is no longer copied into the generated project.
+
+
+## Android application identity alignment
+
+The private repository's Android CI workflow generates the project using `flutter create --org com.rhm --project-name rhm_mobile`. The public preparation script now uses the same organization prefix, producing application ID `com.rhm.rhm_mobile` rather than the initially introduced `org.rhm.rhm_mobile`.
+
+This aligns the public build scaffold with the established private CI configuration. It does **not** prove that the installed phone APK uses this ID or that signing is compatible; package name and certificate fingerprint must still be checked against the installed APK before any release or in-place update.

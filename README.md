@@ -35,7 +35,7 @@ flutter analyze
 
 ## Prepare and build Android ARM64
 
-The repository stores Android manifest/network-security templates rather than generated Gradle scaffolding. The script preserves Flutter's current Gradle DSL and applies only the required minSdk/desugaring settings. Generate the Android host project with:
+The project scaffold uses the existing private CI organization prefix `com.rhm` with project name `rhm_mobile` to retain the established `com.rhm.rhm_mobile` application ID. Verify the installed APK's actual application ID and signing certificate before any release. The repository stores Android manifest/network-security templates rather than generated Gradle scaffolding. The script preserves Flutter's current Gradle DSL and applies only the required minSdk/desugaring settings. Generate the Android host project with:
 
 ```sh
 ./scripts/prepare_android_project.sh

@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "org.rhm.rhm_mobile"
+    namespace = "com.rhm.rhm_mobile"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -22,7 +22,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "org.rhm.rhm_mobile"
+        applicationId = "com.rhm.rhm_mobile"
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
