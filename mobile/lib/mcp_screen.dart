@@ -162,7 +162,7 @@ class _RhmMcpScreenState extends State<RhmMcpScreen> {
                   style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'ستُرسل هذه المدخلات إلى خادم MCP الخارجي. لا تضع كلمات مرور أو رموز وصول أو بيانات خاصة.',
                   style: TextStyle(fontSize: 12, color: Theme.of(context).extension<RhmUiTokens>()!.warning),
                 ),
@@ -363,7 +363,7 @@ class _RhmMcpScreenState extends State<RhmMcpScreen> {
                             Text('الأدوات المسموح بها: ${server.allowedTools.length}'),
                             const SizedBox(height: 10),
                             if (!server.enabled || !server.approved || !server.credentialConfigured)
-                              const Text(
+                              Text(
                                 'يلزم تفعيل الخادم واعتماده وإعداد بيانات اعتماده في Backend قبل اكتشاف الأدوات.',
                                 style: TextStyle(fontSize: 12, color: Theme.of(context).extension<RhmUiTokens>()!.warning),
                               )
@@ -394,7 +394,7 @@ class _RhmMcpScreenState extends State<RhmMcpScreen> {
                       ),
                     ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'تنبيه أمني: لا تُرسل إلى أدوات MCP بيانات اعتماد RHM أو مفاتيح المزودين أو محتوى خاصًا إلا بعد مراجعة الحاجة والموافقة الصريحة.',
                     style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
                   ),
