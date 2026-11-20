@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 
 class RhmAndroidRuntimeStatus {
@@ -7,6 +9,10 @@ class RhmAndroidRuntimeStatus {
     required this.autostartEnabled,
     required this.notificationPermissionGranted,
     required this.apiPortReachable,
+    required this.apiHealthState,
+    required this.backendAutostartEnabled,
+    required this.termuxInstalled,
+    required this.termuxPermissionGranted,
     this.lastApiCheckAt,
     this.lastError,
   });
@@ -16,6 +22,10 @@ class RhmAndroidRuntimeStatus {
   final bool autostartEnabled;
   final bool notificationPermissionGranted;
   final bool apiPortReachable;
+  final String apiHealthState;
+  final bool backendAutostartEnabled;
+  final bool termuxInstalled;
+  final bool termuxPermissionGranted;
   final DateTime? lastApiCheckAt;
   final String? lastError;
 
@@ -28,7 +38,11 @@ class RhmAndroidRuntimeStatus {
       autostartEnabled: data['autostartEnabled'] == true,
       notificationPermissionGranted:
           data['notificationPermissionGranted'] == true,
-      apiPortReachable: data['apiPortReachable'] == true,
+      apiPortReachable: data['apiHealthy'] == true || data['apiPortReachable'] == true,
+      apiHealthState: data['apiHealthState']?.toString() ?? 'unknown',
+      backendAutostartEnabled: data['backendAutostartEnabled'] == true,
+      termuxInstalled: data['termuxInstalled'] == true,
+      termuxPermissionGranted: data['termuxPermissionGranted'] == true,
       lastApiCheckAt: checkAt is int && checkAt > 0
           ? DateTime.fromMillisecondsSinceEpoch(checkAt)
           : null,
@@ -43,6 +57,10 @@ class RhmAndroidRuntimeStatus {
         autostartEnabled: false,
         notificationPermissionGranted: false,
         apiPortReachable: false,
+        apiHealthState: 'unsupported',
+        backendAutostartEnabled: false,
+        termuxInstalled: false,
+        termuxPermissionGranted: false,
       );
 }
 
@@ -69,6 +87,55 @@ class RhmAndroidRuntimeBridge {
       throw RhmAndroidRuntimeException(
         error.code,
         error.message ?? 'تعذر قراءة حالة مضيف Android.',
+      );
+    }
+  }
+
+  Future<void> setHealthToken(String token) async {
+    if (!Platform.isAndroid) return;
+    try {
+      await _channel.invokeMethod<void>('setHealthToken', token);
+    } on PlatformException catch (error) {
+      throw RhmAndroidRuntimeException(
+        error.code,
+        error.message ?? 'تعذر مزامنة رمز فحص الصحة إلى Android Keystore.',
+      );
+    }
+  }
+
+  Future<void> startBackend() => _invokeBackendAction('startBackend');
+  Future<void> stopBackend() => _invokeBackendAction('stopBackend');
+  Future<void> restartBackend() => _invokeBackendAction('restartBackend');
+
+  Future<void> _invokeBackendAction(String method) async {
+    try {
+      await _channel.invokeMethod<void>(method);
+    } on PlatformException catch (error) {
+      throw RhmAndroidRuntimeException(
+        error.code,
+        error.message ?? 'تعذر إرسال أمر إدارة Backend إلى Termux.',
+      );
+    }
+  }
+
+  Future<void> setBackendAutostartEnabled(bool enabled) async {
+    try {
+      await _channel.invokeMethod<void>('setBackendAutostartEnabled', enabled);
+    } on PlatformException catch (error) {
+      throw RhmAndroidRuntimeException(
+        error.code,
+        error.message ?? 'تعذر حفظ تشغيل Backend بعد الإقلاع.',
+      );
+    }
+  }
+
+  Future<void> openTermuxSettings() async {
+    try {
+      await _channel.invokeMethod<void>('openTermuxSettings');
+    } on PlatformException catch (error) {
+      throw RhmAndroidRuntimeException(
+        error.code,
+        error.message ?? 'تعذر فتح إعدادات Termux.',
       );
     }
   }
