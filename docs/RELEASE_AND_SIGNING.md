@@ -43,3 +43,12 @@ The current app asks the private FastAPI backend for update metadata and assets.
 ## Debug package isolation
 
 CI now adds `.debug` to the debug build application ID, producing `com.rhm.rhm_mobile.debug` while leaving the intended release ID `com.rhm.rhm_mobile` unchanged. The workflow inspects the APK manifest with Android `aapt` and fails if the debug package name is not exact. This allows a development build to be installed side-by-side without replacing the existing release installation. It does not prove the release signing key is available or that a future signed build can update the installed app.
+
+
+## Private signing workflow for public mobile source — 2026-11-20
+
+A private workflow proposal is available in [private PR #45](https://github.com/HamoideAbd123/rhm-personal-ai-core/pull/45). It checks out a selected public RHM-Mobile-Server branch, runs Flutter tests and analysis, and builds an ARM64 production APK using the existing private repository secrets. The APK remains a private Actions artifact.
+
+The first workflow run and retry failed before runner allocation and before any step executed; no signed artifact was produced. This is not evidence of a signing-key mismatch or Gradle failure. Do not move signing secrets to the public repository. Re-run after private GitHub Actions runner execution is available.
+
+The workflow prints the signer SHA-256 fingerprint. Configure the non-secret private repository variable `RHM_ANDROID_CERT_SHA256` to enforce a fingerprint check. Before installing over any existing production app, compare the APK application ID and certificate fingerprint against a trusted previous production APK or the installed app's known certificate. A debug APK with `.debug` package identity is not an in-place release update.
