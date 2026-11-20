@@ -5,6 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
 import 'api_client.dart';
+import 'rhm_theme.dart';
 import 'android_runtime_screen.dart';
 import 'notifications_screen.dart';
 import 'mcp_screen.dart';
@@ -238,7 +239,7 @@ class _RhmControlCenterScreenState extends State<RhmControlCenterScreen> {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 11, color: Colors.black54),
+                  style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ],
@@ -259,8 +260,8 @@ class _RhmControlCenterScreenState extends State<RhmControlCenterScreen> {
       elevation: 0,
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: const Color(0xffe5f5ef),
-          child: Icon(icon, color: const Color(0xff159b72)),
+          backgroundColor: Theme.of(context).extension<RhmUiTokens>()!.accentSoft,
+          child: Icon(icon, color: Theme.of(context).colorScheme.primary),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
@@ -518,7 +519,7 @@ class _RhmControlCenterScreenState extends State<RhmControlCenterScreen> {
                   const SizedBox(height: 8),
                   const Text(
                     'لا تعرض اللوحة مفاتيح API أو رموز الوصول أو بيانات الاعتماد. الإجراءات غير المدعومة لا تظهر كأزرار وهمية.',
-                    style: TextStyle(fontSize: 12, color: Colors.black54, height: 1.6),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.6),
                   ),
                 ],
               ),
