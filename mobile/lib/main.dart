@@ -133,10 +133,22 @@ class _SuggestionChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ActionChip(
         onPressed: onTap,
-        avatar: Icon(icon, size: 17, color: const Color(0xff159b72)),
-        label: Text(label, style: const TextStyle(fontSize: 12, color: Color(0xff3b4662))),
-        backgroundColor: Colors.white,
-        side: const BorderSide(color: Color(0xffe2e7f3)),
+        avatar: Icon(
+          icon,
+          size: 17,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        label: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        side: BorderSide(
+          color: Theme.of(context).extension<RhmUiTokens>()!.border,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 7),
       );
@@ -424,7 +436,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   const SizedBox(height: 10),
                   const Text(
                     'سيتم التحقق من SHA-256 قبل فتح مثبت Android. يجب الموافقة على التثبيت من نافذة Android.',
-                    style: TextStyle(fontSize: 12, color: Color(0xff777f91)),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -1983,7 +1998,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.link_off_rounded, size: 42, color: Color(0xff8a93a5)),
+                Icon(
+                  Icons.link_off_rounded,
+                  size: 42,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 const SizedBox(height: 14),
                 const Text(
                   'اتصل بخادم RHM لفتح هذه المساحة.',
@@ -2013,8 +2032,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         child: ListTile(
           minVerticalPadding: 12,
           leading: CircleAvatar(
-            backgroundColor: const Color(0xffe8f5f0),
-            child: Icon(icon, color: const Color(0xff159b72)),
+            backgroundColor: Theme.of(context).extension<RhmUiTokens>()!.accentSoft,
+            child: Icon(icon, color: Theme.of(context).colorScheme.primary),
           ),
           title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
           subtitle: Text(subtitle),
@@ -2032,7 +2051,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         children: [
           const Text(
             'تابع العمل والتنبيهات والأحداث المهمة في RHM.',
-            style: TextStyle(color: Color(0xff737b8e)),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 14),
           _hubTile(
@@ -2420,8 +2441,16 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               ),
                               boxShadow: message.isUser
                                   ? const []
-                                  : [BoxShadow(color: const Color(0xff18264a).withValues(alpha: .045), blurRadius: 12, offset: const Offset(0, 3))],
-                              border: message.isUser ? null : Border.all(color: const Color(0xffedf0f6)),
+                                  : [BoxShadow(
+                                    color: Theme.of(context).colorScheme.shadow.withValues(alpha: .08),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 3),
+                                  )],
+                              border: message.isUser
+                                  ? null
+                                  : Border.all(
+                                      color: Theme.of(context).extension<RhmUiTokens>()!.border,
+                                    ),
                             ),
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(15, 12, 15, 10),
@@ -2527,12 +2556,19 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       if (!message.isUser) ...[
-                                        const Icon(Icons.auto_awesome, size: 13, color: Color(0xff329b78)),
+                                        Icon(
+                                          Icons.auto_awesome,
+                                          size: 13,
+                                          color: Theme.of(context).colorScheme.primary,
+                                        ),
                                         const SizedBox(width: 5),
                                         Flexible(
                                           child: Text(
                                             message.provider ?? 'RHM',
-                                            style: const TextStyle(fontSize: 10, color: Color(0xff9299a9)),
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                            ),
                                           ),
                                         ),
                                         const SizedBox(width: 4),
@@ -2542,7 +2578,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                           padding: EdgeInsets.zero,
                                           tooltip: 'قراءة الرد',
                                           onPressed: () => _speakResponse(message.text),
-                                          icon: const Icon(Icons.volume_up_rounded, size: 18, color: Color(0xff4c7e6b)),
+                                          icon: Icon(
+                                            Icons.volume_up_rounded,
+                                            size: 18,
+                                            color: Theme.of(context).colorScheme.primary,
+                                          ),
                                         ),
                                       ],
                                       IconButton(
@@ -2551,7 +2591,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                         padding: EdgeInsets.zero,
                                         tooltip: 'نسخ الرسالة',
                                         onPressed: () => _copyMessage(message.text),
-                                        icon: const Icon(Icons.copy_rounded, size: 16, color: Color(0xff7c8797)),
+                                        icon: Icon(
+                                          Icons.copy_rounded,
+                                          size: 16,
+                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -2633,8 +2677,16 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(26),
-                        border: Border.all(color: const Color(0xffe8ebf3)),
-                        boxShadow: [BoxShadow(color: const Color(0xff25345b).withValues(alpha: .05), blurRadius: 18, offset: const Offset(0, 5))],
+                        border: Border.all(
+                          color: Theme.of(context).extension<RhmUiTokens>()!.border,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(context).colorScheme.shadow.withValues(alpha: .08),
+                            blurRadius: 18,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
@@ -2643,8 +2695,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             tooltip: _listening ? 'إيقاف التسجيل' : 'تسجيل صوتي',
                             onPressed: _busy ? null : _toggleRecording,
                             style: IconButton.styleFrom(
-                              backgroundColor: _listening ? const Color(0xffffe8e8) : const Color(0xffeef2ff),
-                              foregroundColor: _listening ? const Color(0xffc73b45) : const Color(0xff159b72),
+                              backgroundColor: _listening
+                                  ? Theme.of(context).colorScheme.errorContainer
+                                  : Theme.of(context).colorScheme.surfaceContainerHighest,
+                              foregroundColor: _listening
+                                  ? Theme.of(context).colorScheme.error
+                                  : Theme.of(context).colorScheme.primary,
                             ),
                             icon: Icon(_listening ? Icons.stop_rounded : Icons.mic_none_rounded),
                           ),
@@ -2671,9 +2727,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                             tooltip: 'إرسال الرسالة',
                             onPressed: _busy || _listening ? null : _sendMessage,
                             style: IconButton.styleFrom(
-                              backgroundColor: const Color(0xff159b72),
-                              foregroundColor: Colors.white,
-                              disabledBackgroundColor: const Color(0xffb9c5e8),
+                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                              disabledBackgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                               minimumSize: const Size(46, 46),
                             ),
                             icon: _busy
@@ -2694,7 +2750,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                           tooltip: 'إيقاف القراءة الصوتية',
                           visualDensity: VisualDensity.compact,
                           onPressed: _speaking ? _stopSpeaking : null,
-                          icon: const Icon(Icons.volume_off_outlined, size: 18, color: Color(0xff858da0)),
+                          icon: Icon(
+                            Icons.volume_off_outlined,
+                            size: 18,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                         ),
                         const Flexible(
                           child: Text(
