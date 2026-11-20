@@ -214,7 +214,7 @@ class RhmRuntimeService : Service() {
         val lastRecoveryAt = prefs.getLong(PREF_LAST_RECOVERY_AT, 0L)
         if (now - lastRecoveryAt < delayMs) return
 
-        val action = if (attempts == 0 && !everHealthy) "start" else "restart"
+        val action = "restart"
         recoveryInProgress = true
         prefs.edit()
             .putLong(PREF_LAST_RECOVERY_AT, now)
