@@ -1656,11 +1656,29 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
 
   Widget _buildSidebar() {
-    final available = _providers
-        .where((provider) => provider.configured && provider.models.isNotEmpty)
-        .toList();
-    final selected = available.where((provider) => provider.provider == _preferredProvider);
-    final models = selected.isEmpty ? <String>[] : selected.first.models;
+    // Provider catalogs may contain repeated entries (for example, Gemini
+    // returned by more than one configuration source). DropdownButton
+    // requires each value to occur exactly once.
+    final available = <RhmProviderInfo>[];
+    final seenProviders = <String>{};
+    for (final provider in _providers) {
+      if (provider.configured &&
+          provider.models.isNotEmpty &&
+          seenProviders.add(provider.provider)) {
+        available.add(provider);
+      }
+    }
+    final selectedProvider = available.any(
+      (provider) => provider.provider == _preferredProvider,
+    )
+        ? _preferredProvider
+        : null;
+    final selected = available.where(
+      (provider) => provider.provider == selectedProvider,
+    );
+    final models = selected.isEmpty
+        ? <String>[]
+        : selected.first.models.toSet().toList(growable: false);
     final query = _conversationSearch.text.trim().toLowerCase();
     final visibleConversations = _conversations.where((conversation) {
       if (query.isEmpty) return true;
@@ -1705,7 +1723,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   child: DropdownButtonFormField<String>(
-                    initialValue: _preferredProvider,
+                    initialValue: selectedProvider,
                     isExpanded: true,
                     decoration: const InputDecoration(labelText: 'المزوّد'),
                     items: [
@@ -1755,7 +1773,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         ),
                       ),
                     ],
-                    onChanged: _preferredProvider == null
+                    onChanged: selectedProvider == null
                         ? null
                         : (value) {
                             setState(() => _preferredModel = value);
