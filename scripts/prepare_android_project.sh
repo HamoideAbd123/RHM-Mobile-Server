@@ -43,6 +43,8 @@ cp "${KOTLIN_SOURCE}/RhmRuntimeService.kt.template" "${KOTLIN_PACKAGE_DIR}/RhmRu
 cp "${KOTLIN_SOURCE}/RhmBootReceiver.kt.template" "${KOTLIN_PACKAGE_DIR}/RhmBootReceiver.kt"
 cp "${KOTLIN_SOURCE}/RhmTermuxRuntimeController.kt.template" "${KOTLIN_PACKAGE_DIR}/RhmTermuxRuntimeController.kt"
 cp "${KOTLIN_SOURCE}/RhmHealthTokenStore.kt.template" "${KOTLIN_PACKAGE_DIR}/RhmHealthTokenStore.kt"
+cp "${KOTLIN_SOURCE}/RhmTermuxRuntimeController.kt.template" "${KOTLIN_PACKAGE_DIR}/RhmTermuxRuntimeController.kt"
+cp "${KOTLIN_SOURCE}/RhmHealthTokenStore.kt.template" "${KOTLIN_PACKAGE_DIR}/RhmHealthTokenStore.kt"
 python3 - "${ANDROID_APP}/src/main/AndroidManifest.xml" "${ANDROID_APP}/build.gradle.kts" <<'PY'
 from pathlib import Path
 import sys
