@@ -1,90 +1,34 @@
 # RHM Mobile Server — verified status
 
 **Status date:** 2026-11-20  
-**Work branch:** `bootstrap/import-flutter-client-2026-11-20`
+**Work branch:** bootstrap/import-flutter-client-2026-11-20
 
-## Repository state before this change
+## Verified baseline
 
-- Private source: [HamoideAbd123/rhm-personal-ai-core](https://github.com/HamoideAbd123/rhm-personal-ai-core), default branch `main`.
-- Public target: [HamoideAbd123/RHM-Mobile-Server](https://github.com/HamoideAbd123/RHM-Mobile-Server), default branch `main`.
-- The public repository initially contained only its architecture README.
-- The private repository contained the Flutter app under `mobile/`; its manifest declared `0.1.10+11`.
+- The public mobile repository contains the transferred Flutter client and Android integration templates.
+- The private RHM core remains authoritative for FastAPI, Uvicorn, PostgreSQL, application logic, secrets and backend releases.
+- Baseline commit 419c4ce passed GitHub Actions tests, static analysis, ARM64 debug build, package identity check and artifact upload.
 
-## Import source and contents
+## Changes in this work
 
-- Source commit inspected: `b1a260c2399f5c20265ceec32d27ec18ae31bea5`.
-- Source mobile subtree: `d023a1c1499a2a7a5d3a338ceb219090eea9839a`.
-- Imported: 33 existing mobile source/config/test files, retaining the `mobile/` directory.
-- Included: Dart application code, all existing Flutter tests, pubspec, analysis options, changelog and Android manifest/Gradle/network-security templates.
-- Excluded: Python backend, Next.js frontend, migrations, databases, private operational reports, `.env`, provider keys, GitHub credentials, API token files and local machine paths.
-- Replaced the app README because it contained private device-local paths and included stale navigation descriptions that conflicted with the current feature list.
-- Added a root README, architecture/API/security/release docs, roadmap, status report, Android preparation script and mobile-only CI workflow.
-- Strengthened ignore rules for local secrets, Android signing files and generated APK/AAB files.
+- Review findings fixed in commit 7e31d19: installer result checked, quiet-hour notifications deferred rather than marked seen, Android host screen exposed from offline settings, IPv6 loopback rejected, Android minSdk raised to 24.
+- Kotlin RUN_COMMAND bridge added for fixed Termux actions.
+- Android Keystore AES-GCM token store added for authenticated FastAPI monitoring.
+- Foreground monitor checks GET /mobile/health with Bearer authentication instead of treating TCP reachability as health.
+- Termux wrapper and feasibility/data-protection documentation added.
 
-## Security review performed
+## Remaining work
 
-- Searched the source repository for the private home-path pattern; the mobile README was the only match under the mobile tree. It was rewritten before import.
-- Searched for common GitHub personal-token prefix `ghp_`; no matches were returned.
-- Reviewed the app README, package manifest, Android templates, update client and API client. The app uses a server bearer token at runtime, not a credential embedded in the checked-in Dart source.
-- This is a source-tree review, not a complete historical secret scan of every commit in the private repository. No history from the private repository is copied into this public repository.
-- No keystore, signing password, production database or actual API token was read or copied.
+- Run CI for the latest Kotlin/Flutter integration and fix build/test findings.
+- Install the wrapper and validate start/stop/restart on the Huawei Android 10 phone.
+- Verify authenticated healthy and unauthorized states on device.
+- Verify process cleanup, boot startup, Huawei battery policy and PostgreSQL data preservation.
+- Prove complete Python dependency compatibility before an embedded-runtime attempt.
+- Migrate the private backend update proxy to read releases from the public mobile repository.
+- Confirm the installed app signing certificate, then configure protected signing secrets for a production build.
 
-## Verification state
+## Release and security
 
-| Check | Result |
-|---|---|
-| Source and target repositories confirmed | Pass |
-| Source mobile tree enumerated | Pass |
-| Mobile files fetched from source `main` | Pass |
-| Public import branch created | Pass |
-| Security/path review of mobile source | Pass, scope noted above |
-| Android preparation script added | Added; execution pending |
-| Flutter unit/widget tests | Pending GitHub Actions |
-| Flutter static analysis | Pending GitHub Actions |
-| Android ARM64 debug build | Pending GitHub Actions |
-| Signed release APK | Not attempted; existing signing identity must be preserved |
-| Kotlin foreground service / boot receiver | Not implemented |
-| Embedded Python runtime / database compatibility | Not implemented; feasibility phase pending |
-| Huawei Android 10 end-to-end acceptance | Pending device tests |
-
-## Known issues to resolve before release
-
-1. `pubspec.yaml` says `0.1.10+11`, while the top visible changelog entry is `0.1.7+8`. Reconcile release history before tagging.
-2. The installed app's update client currently uses authenticated update-proxy routes on the private backend, whose release source is the private RHM core repository. Public mobile releases require an intentional backend proxy migration.
-3. The public repository has no license file. Choose a license deliberately before accepting external contributions.
-4. The new workflow builds only an ARM64 debug APK. A distributable update must be signed with the exact established RHM signing identity; never create a replacement key for an in-place update.
-5. The current import does not run a Python server as an Android service. That requires the Kotlin host and Python ARM64 feasibility milestones.
-
-## Safety of repository changes
-
-All modifications are confined to this public repository's import branch. The private RHM core repository and its `main` branch are not modified by this operation.
-
-
-## CI correction — modern Android Gradle Plugin
-
-The first CI run (`44724008913`) passed Android host preparation, dependency resolution, all Flutter tests, and `flutter analyze`, but failed during `assembleDebug`. The old imported Gradle template used deprecated `android { }` and `kotlinOptions` APIs that current AGP/Kotlin tooling reports as compilation errors.
-
-Correction committed in the follow-up on this branch:
-- preserve Gradle files generated by the selected Flutter stable SDK;
-- set `minSdk = 23` in the generated file;
-- enable core library desugaring through the generated `compileOptions` block;
-- add `desugar_jdk_libs:2.1.4` if absent;
-- fail fast if any required setting cannot be patched safely.
-
-The next CI run must prove the correction by completing the ARM64 debug build. The old `mobile/android/app-build.gradle.kts.template` is retained as a source reference only and is no longer copied into the generated project.
-
-
-## Android application identity alignment
-
-The private repository's Android CI workflow generates the project using `flutter create --org com.rhm --project-name rhm_mobile`. The public preparation script now uses the same organization prefix, producing application ID `com.rhm.rhm_mobile` rather than the initially introduced `org.rhm.rhm_mobile`.
-
-This aligns the public build scaffold with the established private CI configuration. It does **not** prove that the installed phone APK uses this ID or that signing is compatible; package name and certificate fingerprint must still be checked against the installed APK before any release or in-place update.
-
-
-## Static-analysis cleanup — monitor Dart files
-
-Latest monitor CI at `1e97fdda84067a9ee88d9dcc8b4966ffa145d4fe` passed preparation and all 59 Flutter tests, then stopped at `flutter analyze` on two style infos:
-- use string interpolation rather than string concatenation for the last-check label;
-- use a package import rather than a relative import into lib from a test.
-
-Both were fixed in the next commit. The Android compilation and package identity check have not yet run on the monitor implementation until analyze passes.
+- CI debug APKs are test artifacts only, not production updates.
+- No signing key or credential was generated, copied or committed.
+- No database files, environment variables, provider keys, API tokens or private reports were copied into this public repository.
