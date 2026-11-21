@@ -33,7 +33,7 @@ Architecture and delivery records:
 - [x] Expose recovery diagnostics in Flutter.
 - [x] Validate Linux process start-time and command identity before PID status/stop operations.
 
-## Independent Android app update manager — implementation branch in progress
+## Independent Android app update manager — implementation CI passed; device and release acceptance pending
 
 - [x] Move Android app release discovery away from the private Core FastAPI update proxy.
 - [x] Read stable release metadata directly from the fixed `HamoideAbd123/RHM-Mobile-Server` GitHub Releases endpoint without sending an RHM bearer token.
@@ -46,7 +46,7 @@ Architecture and delivery records:
 - [x] Check releases on app launch and during foreground/resume intervals without requiring the local backend.
 - [x] Schedule a best-effort 12-hour WorkManager check with a network-connected constraint and a dedicated app-update notification.
 - [x] Declare `REQUEST_INSTALL_PACKAGES` and add a CI manifest-permission assertion for sideloaded updates.
-- [ ] Pass the new Flutter tests, static analysis and ARM64 debug CI run.
+- [x] Pass the Flutter tests, static analysis, ARM64 debug build, package identity and install/notification permission assertions in [CI run #44953230929](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44953230929).
 - [ ] Complete on-device update tests on Huawei Android 10: Wi-Fi loss/resume, checksum rejection, installer approval, update-in-place and data preservation.
 - [ ] Enable signed production publication only after the original package ID and certificate fingerprint are verified. Never create a replacement keystore.
 
@@ -54,8 +54,7 @@ The updater is independent of Core server updates. `/server-update/*` continues 
 
 ## Source review and merge gates
 
-- [ ] Review the full PR #2 diff and resolve the existing base-branch divergence.
-- [ ] Merge PR #2 only after explicit owner approval. It remains open and unmerged.
+- [ ] Reconcile the existing import PR #2 with the current `main` head, re-run CI on the reconciled branch, and merge after all checks pass.
 - [ ] Keep the private core, production secrets, database and web UI outside this public mobile PR.
 
 ## Device acceptance: Huawei Android 10

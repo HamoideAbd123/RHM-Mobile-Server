@@ -2,37 +2,34 @@
 
 **Status date:** 2026-11-21  
 **Work branch:** `bootstrap/update-manager-independent-2026-11-21`  
-**Verified code commit:** `cc4b621074ae9e0be81b01163c22a5c3a10f330d`  
+**Verified code commit:** `a0294c5582d64d8b2ec318975266ff29e3775625`  
 **Private core:** `HamoideAbd123/rhm-personal-ai-core` (authoritative backend)  
 **Public mobile:** `HamoideAbd123/RHM-Mobile-Server` (Android/Flutter integration)
 
 ## Current CI verification
 
-GitHub Actions run [#134](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44945841695) completed successfully on the verified code commit:
+GitHub Actions run [#44953230929](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44953230929) completed successfully on code commit `a0294c5582d64d8b2ec318975266ff29e3775625`.
 
-- Flutter unit/widget tests: passed.
-- Flutter static analysis: passed.
-- Generated Android host preparation and dependency resolution: passed.
-- Android ARM64 debug APK build: passed.
-- Debug package identity verification: passed (`com.rhm.rhm_mobile.debug`).
-- Artifact upload: passed.
+- Flutter unit/widget tests: **passed**.
+- Flutter static analysis: **passed**.
+- Generated Android host preparation and dependency resolution: **passed**.
+- Android ARM64 debug APK build: **passed**.
+- Debug package identity verification: **passed** (`com.rhm.rhm_mobile.debug`).
+- Manifest assertions for `REQUEST_INSTALL_PACKAGES` and `POST_NOTIFICATIONS`: **passed**.
+- Artifact upload: **passed**.
 
-The uploaded artifact is `rhm-mobile-android-arm64-debug` (63,403,642 bytes, about 60.5 MiB). Its SHA-256 is:
+Uploaded artifact: `rhm-mobile-android-arm64-debug`, ID `14726368838`, size **63,426,873 bytes** (about 60.5 MiB). Artifact archive SHA-256: `1d068588ecd0b9fb3a51f20bf2f8e4228442b72dc71dbf87c73cccdfb51c8de5`. It expires on **2026-12-05 21:52 UTC**.
 
-```text
-fd86fcab3fdb897f5c0b1b90b0d4ea7e17ea70389a15053587eb7a412ae5b043
-```
-
-The artifact expires on **2026-12-05 20:27 UTC**. It is a **debug/test APK**, not a production-signed release. Its package ID is `com.rhm.rhm_mobile.debug`; it must not be treated as an in-place update for the production package `com.rhm.rhm_mobile`.
+This is a **debug/test APK**, not a production update. Its package ID is `com.rhm.rhm_mobile.debug`; it cannot update the production package `com.rhm.rhm_mobile`.
 
 ## Independent Android app updater — 2026-11-21
 
 - The updater has been moved off the private Core FastAPI proxy and now reads the fixed public mobile repository's GitHub Releases API.
 - The implementation includes exact repository/tag/asset URL validation, streamed APK download, resumable Range requests, cancellation, byte progress, size/APK-header/SHA-256 verification, Android installer handoff, foreground checks, and a best-effort 12-hour WorkManager notification check.
 - This updater does not use the saved RHM server URL or RHM bearer token.
-- Flutter tests, static analysis and ARM64 debug CI for the implementation branch are pending final verification. A debug APK is not a production update.
+- Flutter tests, static analysis, ARM64 debug build, package identity, manifest permissions and artifact upload passed in [Actions run #44953230929](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44953230929). The uploaded APK is debug-only and is not a production update.
 - Huawei physical-device acceptance, exact installed release certificate comparison and a data-preserving in-place install remain required.
-- No app version bump, production-signed APK, GitHub release or mobile release tag has been created.
+- GitHub's latest stable release endpoint returned HTTP 404 on 2026-11-21: this repository has no stable release yet. No app version bump, production-signed APK, GitHub release or mobile release tag has been created.
 
 ## Flutter refactor completed on this branch
 
@@ -60,8 +57,8 @@ Detailed references:
 ## GitHub review boundary
 
 - PR #2 remains open and unmerged: https://github.com/HamoideAbd123/RHM-Mobile-Server/pull/2
-- Work is on `bootstrap/import-flutter-client-2026-11-20`, separate from `main`.
-- No merge to `main` was performed.
+- The updater implementation is on `bootstrap/update-manager-independent-2026-11-21`, derived from `bootstrap/import-flutter-client-2026-11-20`.
+- No merge to `main` has been performed yet; PR #2 still requires branch reconciliation and a final green CI run.
 - PR #2 has existing base-branch divergence and remains an explicit review/merge decision for the owner.
 
 ## Remaining acceptance gates
@@ -74,12 +71,6 @@ Detailed references:
 6. Verify Termux RUN_COMMAND, authenticated health, bounded supervisor recovery, screen-off and reboot behavior on the handset. CI does not prove Android/EMUI lifecycle behavior.
 7. Produce a production-signed ARM64 APK through the protected private-core signing workflow, then compare signer fingerprint and production package identity before any in-place installation.
 8. Confirm existing conversations, memory, projects, settings, credentials and PostgreSQL rows remain intact after the signed update.
-
-## Independent app update manager — 2026-11-21
-
-Implementation is underway on `bootstrap/update-manager-independent-2026-11-21`. The client-side app updater now targets this repository's GitHub Releases directly, rather than the private Core FastAPI update proxy. The implementation includes strict release/asset allowlisting, streamed APK download, HTTP Range resume, SHA-256 and size verification, install handoff, foreground checks, and a WorkManager background check with local notification.
-
-The implementation branch still requires GitHub Actions Flutter tests, analysis and ARM64 debug build. This is not a production release: the repository does not contain the private signing identity, and the exact installed production APK signer has not been verified as part of this task. No application version bump, production APK, GitHub Release or release Tag has been created.
 
 ## Signing and release policy
 
