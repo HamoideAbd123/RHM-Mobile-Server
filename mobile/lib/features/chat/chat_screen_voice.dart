@@ -1,11 +1,11 @@
 part of 'chat_screen.dart';
 
 extension _ChatScreenVoice on _ChatScreenState {
-  Future<void> _toggleRecording() async {
+  Future<void> toggleRecording() async {
     if (_listening) {
       await _speech.stop();
       if (mounted) {
-        setState(() {
+        this._setState(() {
           _listening = false;
           _status = 'تم إيقاف التسجيل. راجع النص قبل الإرسال.';
         });
@@ -20,7 +20,7 @@ extension _ChatScreenVoice on _ChatScreenState {
         _speechInitialized = await _speech.initialize(
           onError: (_) {
             if (mounted) {
-              setState(() {
+              this._setState(() {
                 _listening = false;
                 _error = _offlineRecognition
                     ? 'تعذر التعرف المحلي أو لم يُسمح بإذن الميكروفون.'
@@ -30,20 +30,20 @@ extension _ChatScreenVoice on _ChatScreenState {
           },
           onStatus: (status) {
             if (status == 'notListening' && mounted) {
-              setState(() => _listening = false);
+              this._setState(() => _listening = false);
             }
           },
         );
       }
       if (!mounted) return;
       if (!_speechInitialized) {
-        setState(() => _error = 'التعرف على الكلام غير متاح أو لم يُسمح بإذن الميكروفون.');
+        this._setState(() => _error = 'التعرف على الكلام غير متاح أو لم يُسمح بإذن الميكروفون.');
         return;
       }
       matchingLocales = await _speech.locales();
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'تعذر تهيئة خدمة التعرف أو قراءة اللغات المتاحة.');
+        this._setState(() => _error = 'تعذر تهيئة خدمة التعرف أو قراءة اللغات المتاحة.');
       }
       return;
     }
@@ -61,14 +61,14 @@ extension _ChatScreenVoice on _ChatScreenState {
             .compareTo(rightId == preferredLocale ? 0 : 1);
       });
     if (matchingLocales.isEmpty) {
-      setState(() => _error = 'لغة $_locale غير متاحة في خدمة التعرف على هذا الجهاز.');
+      this._setState(() => _error = 'لغة $_locale غير متاحة في خدمة التعرف على هذا الجهاز.');
       return;
     }
     final match = matchingLocales.first;
     _voiceBase = _prompt.text.trim();
     try {
       await _speech.listen(
-        onResult: this._onSpeechResult,
+        onResult: _onSpeechResult,
         listenOptions: SpeechListenOptions(
           localeId: match.localeId,
           onDevice: _offlineRecognition,
@@ -77,7 +77,7 @@ extension _ChatScreenVoice on _ChatScreenState {
         ),
       );
       if (!mounted) return;
-      setState(() {
+      this._setState(() {
         _listening = true;
         _error = null;
         _status = _offlineRecognition
@@ -85,7 +85,7 @@ extension _ChatScreenVoice on _ChatScreenState {
             : 'التعرف عبر خدمة الجهاز؛ قد يتطلب اتصالًا بحسب إعدادات Android.';
       });
     } catch (_) {
-      setState(() {
+      this._setState(() {
         _listening = false;
         _error = _offlineRecognition
             ? 'التعرف المحلي غير متاح. ثبّت حزمة اللغة على الجهاز أو اختر التعرف عبر الإنترنت.'
@@ -94,12 +94,12 @@ extension _ChatScreenVoice on _ChatScreenState {
     }
   }
 
-  void _useSuggestion(String value) {
-    setState(() {
+  void useSuggestion(String value) {
+    this._setState(() {
       _prompt.text = value;
       _prompt.selection = TextSelection.collapsed(offset: value.length);
     });
-    this._scheduleComposerDraftSave(value);
+    _scheduleComposerDraftSave(value);
   }
 
   void _onSpeechResult(SpeechRecognitionResult result) {
@@ -109,9 +109,9 @@ extension _ChatScreenVoice on _ChatScreenState {
       text: combined,
       selection: TextSelection.collapsed(offset: combined.length),
     );
-    this._scheduleComposerDraftSave(combined);
+    _scheduleComposerDraftSave(combined);
     if (result.finalResult && mounted) {
-      setState(() {
+      this._setState(() {
         _listening = false;
         _status = 'راجع النص وعدّله قبل إرساله.';
       });
@@ -126,7 +126,7 @@ extension _ChatScreenVoice on _ChatScreenState {
         requirement == 'false';
   }
 
-  Future<void> _copyMessage(String text) async {
+  Future<void> copyMessage(String text) async {
     try {
       await Clipboard.setData(ClipboardData(text: text));
       if (!mounted) return;
@@ -144,7 +144,7 @@ extension _ChatScreenVoice on _ChatScreenState {
     }
   }
 
-  Future<void> _speakResponse(String text) async {
+  Future<void> speakResponse(String text) async {
     await _speech.stop();
     if (!mounted) return;
     final language = _locale.split('-').first.toLowerCase();
@@ -179,9 +179,9 @@ extension _ChatScreenVoice on _ChatScreenState {
         }
         await _tts.setLanguage(_locale);
       } else {
-        final offline = voices.where(this._isOfflineVoice).toList();
+        final offline = voices.where(_isOfflineVoice).toList();
         final selected = offline.isNotEmpty ? offline.first : voices.first;
-        usingOfflineVoice = this._isOfflineVoice(selected);
+        usingOfflineVoice = _isOfflineVoice(selected);
         await _tts.setVoice({
           'name': selected['name'].toString(),
           'locale': selected['locale'].toString(),
@@ -193,7 +193,7 @@ extension _ChatScreenVoice on _ChatScreenState {
       await _tts.setPitch(1.0);
       await _tts.awaitSpeakCompletion(true);
       if (!mounted) return;
-      setState(() {
+      this._setState(() {
         _error = null;
         _status = usingOfflineVoice
             ? 'تتم قراءة الرد بصوت محلي مثبت على الجهاز.'
@@ -201,14 +201,14 @@ extension _ChatScreenVoice on _ChatScreenState {
       });
       final result = await _tts.speak(text, focus: true);
       if (result != 1 && mounted) {
-        setState(() {
+        this._setState(() {
           _speaking = false;
           _error = 'لم يبدأ محرك الصوت القراءة. تحقق من إعدادات تحويل النص إلى كلام في Android.';
         });
       }
     } catch (_) {
       if (mounted) {
-        setState(() {
+        this._setState(() {
           _speaking = false;
           _error = 'لا يتوفر صوت مناسب للغة المختارة. ثبّت صوتًا عربيًا/إنجليزيًا من إعدادات Android أو غيّر محرك تحويل النص إلى كلام.';
         });
@@ -216,8 +216,8 @@ extension _ChatScreenVoice on _ChatScreenState {
     }
   }
 
-  Future<void> _stopSpeaking() async {
+  Future<void> stopSpeaking() async {
     await _tts.stop();
-    if (mounted) setState(() => _speaking = false);
+    if (mounted) this._setState(() => _speaking = false);
   }
 }

@@ -126,37 +126,42 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   Timer? _composerDraftTimer;
   DateTime? _lastUpdateCheckAt;
 
+  void _this._setState(VoidCallback callback) {
+    if (!mounted) return;
+    this._setState(callback);
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _tts.setStartHandler(() {
-      if (mounted) setState(() => _speaking = true);
+      if (mounted) this._setState(() => _speaking = true);
     });
     _tts.setCompletionHandler(() {
-      if (mounted) setState(() => _speaking = false);
+      if (mounted) this._setState(() => _speaking = false);
     });
     _tts.setCancelHandler(() {
-      if (mounted) setState(() => _speaking = false);
+      if (mounted) this._setState(() => _speaking = false);
     });
     _tts.setErrorHandler((_) {
       if (mounted) {
-        setState(() {
+        this._setState(() {
           _speaking = false;
           _error = 'تعذر تشغيل القراءة الصوتية. تحقق من محرك الصوت واللغة المثبتة.';
         });
       }
     });
     _serverUrl.text = RhmApiClient.defaultServerUrl;
-    this._bootstrap();
+    _bootstrap();
     _updateTimer = Timer.periodic(_updateCheckInterval, (_) {
       if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
-        this._checkForUpdates(silent: true);
+        _checkForUpdates(silent: true);
       }
     });
     _serverNotificationTimer = Timer.periodic(
       const Duration(minutes: 2),
-      (_) => this._pollServerUpdateNotifications(),
+      (_) => _pollServerUpdateNotifications(),
     );
     unawaited(RhmServerUpdateNotifications.instance.initialize());
   }
@@ -186,7 +191,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     _serverNotificationTimer?.cancel();
     _composerDraftTimer?.cancel();
     _composerDraftTimer = null;
-    unawaited(this._persistComposerDraft(_prompt.text));
+    unawaited(_persistComposerDraft(_prompt.text));
     _api?.close();
     _prompt.dispose();
     _conversationSearch.dispose();
@@ -206,15 +211,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
-      unawaited(this._flushComposerDraft());
+      unawaited(_flushComposerDraft());
       return;
     }
     if (state != AppLifecycleState.resumed) return;
-    this._pollServerUpdateNotifications();
+    _pollServerUpdateNotifications();
     final lastCheck = _lastUpdateCheckAt;
     if (lastCheck == null ||
         DateTime.now().difference(lastCheck) >= _updateCheckInterval) {
-      this._checkForUpdates(silent: true);
+      _checkForUpdates(silent: true);
     }
   }
 
@@ -298,7 +303,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 ),
                 const SizedBox(height: 14),
                 FilledButton.icon(
-                  onPressed: this._showConnectionSettings,
+                  onPressed: _showConnectionSettings,
                   icon: const Icon(Icons.settings_ethernet_rounded),
                   label: const Text('إعداد الاتصال'),
                 ),
@@ -323,7 +328,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           actions: [
             IconButton(
               tooltip: 'مركز الإشعارات',
-              onPressed: !_connectionReady ? null : () => this._openWorkspace('notifications'),
+              onPressed: !_connectionReady ? null : () => _openWorkspace('notifications'),
               icon: Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -355,7 +360,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             ),
             IconButton(
               tooltip: 'اختبار اتصال RHM',
-              onPressed: _checkingConnection ? null : this._verifyConnection,
+              onPressed: _checkingConnection ? null : _verifyConnection,
               icon: _checkingConnection
                   ? const SizedBox.square(
                       dimension: 18,
@@ -365,7 +370,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             ),
             IconButton(
               tooltip: 'التحقق من تحديث RHM',
-              onPressed: _checkingUpdate ? null : () => this._checkForUpdates(),
+              onPressed: _checkingUpdate ? null : () => _checkForUpdates(),
               icon: _checkingUpdate
                   ? const SizedBox.square(
                       dimension: 20,
@@ -375,7 +380,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             ),
             IconButton(
               tooltip: 'إعدادات RHM',
-              onPressed: () => this._openWorkspace('settings'),
+              onPressed: () => _openWorkspace('settings'),
               icon: const Icon(Icons.settings_outlined),
             ),
             const SizedBox(width: 6),
@@ -391,7 +396,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       RhmPrimaryNavigation(
                         selectedIndex: _selectedDestination,
                         onDestinationSelected: (index) =>
-                            setState(() => _selectedDestination = index),
+                            this._setState(() => _selectedDestination = index),
                       ),
                       const RhmAppVersionFooter(),
                     ],
@@ -402,7 +407,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               RhmPrimaryNavigation(
                 selectedIndex: _selectedDestination,
                 useRail: true,
-                onDestinationSelected: (index) => setState(() => _selectedDestination = index),
+                onDestinationSelected: (index) => this._setState(() => _selectedDestination = index),
               ),
             Expanded(
               child: IndexedStack(
@@ -451,7 +456,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         if (_connectionReady)
                           RhmMcpStatusChip(
                             api: _api,
-                            onPressed: () => this._openWorkspace('mcp'),
+                            onPressed: () => _openWorkspace('mcp'),
                           ),
                       ],
                     ),
@@ -475,7 +480,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     if (_hasOlderMessages && index == 0) {
                       return Center(
                         child: TextButton.icon(
-                          onPressed: _loadingOlderMessages ? null : this._loadOlderMessages,
+                          onPressed: _loadingOlderMessages ? null : _loadOlderMessages,
                           icon: _loadingOlderMessages
                               ? const SizedBox.square(dimension: 15, child: CircularProgressIndicator(strokeWidth: 2))
                               : const Icon(Icons.history),
@@ -530,9 +535,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: [
-                                  RhmSuggestionChip(label: 'خطّط ليومي', icon: Icons.today_rounded, onTap: () => this._useSuggestion('ساعدني في تنظيم يومي.')),
-                                  RhmSuggestionChip(label: 'طوّر مشروعي', icon: Icons.code_rounded, onTap: () => this._useSuggestion('ساعدني في تطوير مشروعي خطوة بخطوة.')),
-                                  RhmSuggestionChip(label: 'تعلّم شيئًا', icon: Icons.school_rounded, onTap: () => this._useSuggestion('اقترح لي درسًا عمليًا أتعلمه اليوم.')),
+                                  RhmSuggestionChip(label: 'خطّط ليومي', icon: Icons.today_rounded, onTap: () => useSuggestion('ساعدني في تنظيم يومي.')),
+                                  RhmSuggestionChip(label: 'طوّر مشروعي', icon: Icons.code_rounded, onTap: () => useSuggestion('ساعدني في تطوير مشروعي خطوة بخطوة.')),
+                                  RhmSuggestionChip(label: 'تعلّم شيئًا', icon: Icons.school_rounded, onTap: () => useSuggestion('اقترح لي درسًا عمليًا أتعلمه اليوم.')),
                                 ],
                               ),
                             ],
@@ -543,9 +548,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     final message = _messages[messageIndex];
                     return RhmChatMessageBubble(
                       message: message,
-                      textDirection: this._directionFor(message.text),
-                      onSpeak: message.isUser ? null : () => this._speakResponse(message.text),
-                      onCopy: () => this._copyMessage(message.text),
+                      textDirection: _directionFor(message.text),
+                      onSpeak: message.isUser ? null : () => speakResponse(message.text),
+                      onCopy: () => copyMessage(message.text),
                     );
                   },
                   ),
@@ -561,14 +566,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 isListening: _listening,
                 isSpeaking: _speaking,
                 onProjectChanged: (value) {
-                  setState(() => _selectedProjectName = value);
-                  this._scheduleComposerDraftSave(_prompt.text);
+                  this._setState(() => _selectedProjectName = value);
+                  _scheduleComposerDraftSave(_prompt.text);
                 },
-                onTextChanged: this._scheduleComposerDraftSave,
-                directionFor: this._directionFor,
-                onToggleRecording: this._toggleRecording,
-                onSend: this._sendMessage,
-                onStopSpeaking: this._stopSpeaking,
+                onTextChanged: _scheduleComposerDraftSave,
+                directionFor: _directionFor,
+                onToggleRecording: toggleRecording,
+                onSend: _sendMessage,
+                onStopSpeaking: stopSpeaking,
               ),
             ],
           ),
@@ -579,8 +584,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   )
                       ? _buildConnectionRequiredScreen('المشاريع')
                       : RhmProjectsScreen(api: _api!),
-                  this._buildActivityTab(),
-                  this._buildMoreTab(),
+                  _buildActivityTab(),
+                  _buildMoreTab(),
                 ],
               ),
             ),

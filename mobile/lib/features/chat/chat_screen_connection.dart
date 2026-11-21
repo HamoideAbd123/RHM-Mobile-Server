@@ -2,10 +2,10 @@ part of 'chat_screen.dart';
 
 extension _ChatScreenConnection on _ChatScreenState {
   Future<void> _bootstrap() async {
-    await this._restoreAppPreferences();
-    await this._restoreComposerDraft();
+    await _restoreAppPreferences();
+    await _restoreComposerDraft();
     if (!mounted) return;
-    await this._restoreConnection();
+    await _restoreConnection();
   }
 
   Future<void> _restoreConnection() async {
@@ -18,7 +18,7 @@ extension _ChatScreenConnection on _ChatScreenState {
       // Never erase credentials as a side effect of a read/decryption error.
       // Keep the user on the chat screen and surface a recoverable warning.
       if (!mounted) return;
-      setState(() {
+      this._setState(() {
         _status = 'تعذر قراءة بيانات الاتصال من التخزين الآمن. لم تُحذف بياناتك؛ أعد تشغيل التطبيق والهاتف ثم أعد المحاولة.';
         _error = 'تعذر الوصول إلى رمز RHM المحفوظ.';
       });
@@ -31,7 +31,7 @@ extension _ChatScreenConnection on _ChatScreenState {
         : RhmApiClient.defaultServerUrl;
     _serverUrl.text = url;
     if (token == null || token.trim().isEmpty) {
-      setState(() {
+      this._setState(() {
         _status = 'عنوان الخادم محفوظ؛ أدخل رمز الوصول مرة واحدة لإكمال الاتصال.';
       });
       return;
@@ -42,7 +42,7 @@ extension _ChatScreenConnection on _ChatScreenState {
       api.close();
       return;
     }
-    setState(() {
+    this._setState(() {
       _api = api;
       _activeServerUrl = url;
       _serverUrl.text = url;
@@ -52,24 +52,24 @@ extension _ChatScreenConnection on _ChatScreenState {
 
     try {
       await api.checkConnection();
-      await this._syncAndroidHealthToken(token);
+      await _syncAndroidHealthToken(token);
       if (!mounted) return;
-      setState(() => _connectionReady = true);
+      this._setState(() => _connectionReady = true);
       await RhmServerUpdateNotifications.instance.prime(api);
-      await this._loadProviders();
-      await this._loadProjects();
-      await this._restoreConversation();
+      await _loadProviders();
+      await _loadProjects();
+      await _restoreConversation();
       if (mounted) {
-        setState(() {
+        this._setState(() {
           _connectionReady = true;
           _status = 'اتصال محلي بخادم RHM جاهز.';
           _error = null;
         });
-        this._checkForUpdates(silent: true);
+        _checkForUpdates(silent: true);
       }
     } on RhmApiException catch (error) {
       if (mounted) {
-        setState(() {
+        this._setState(() {
           _connectionReady = false;
           _status = 'تم استعادة بيانات الاتصال، لكن الخادم لم يقبل الاتصال حاليًا.';
           _error = error.message;
@@ -77,7 +77,7 @@ extension _ChatScreenConnection on _ChatScreenState {
       }
     } catch (_) {
       if (mounted) {
-        setState(() {
+        this._setState(() {
           _connectionReady = false;
           _status = 'الخادم غير متاح حاليًا؛ بيانات الاتصال ما زالت محفوظة.';
           _error = null;
@@ -90,7 +90,7 @@ extension _ChatScreenConnection on _ChatScreenState {
     final api = _api;
     if (api == null || _checkingConnection) {
       if (api == null && mounted) {
-        setState(() {
+        this._setState(() {
           _connectionReady = false;
           _status = 'أدخل إعدادات الاتصال أولًا.';
         });
@@ -98,7 +98,7 @@ extension _ChatScreenConnection on _ChatScreenState {
       return;
     }
 
-    setState(() {
+    this._setState(() {
       _checkingConnection = true;
       _error = null;
       _status = 'جارٍ اختبار الاتصال بخادم RHM…';
@@ -107,32 +107,32 @@ extension _ChatScreenConnection on _ChatScreenState {
       await api.checkConnection();
       final savedToken = await _storage.read(key: _tokenKey);
       if (savedToken != null && savedToken.isNotEmpty) {
-        await this._syncAndroidHealthToken(savedToken);
+        await _syncAndroidHealthToken(savedToken);
       }
       if (!mounted) return;
-      setState(() {
+      this._setState(() {
         _connectionReady = true;
         _status = 'الاتصال بخادم RHM يعمل بصورة سليمة.';
         _error = null;
       });
-      await this._loadProviders();
-      await this._loadProjects();
+      await _loadProviders();
+      await _loadProjects();
     } on RhmApiException catch (error) {
       if (!mounted) return;
-      setState(() {
+      this._setState(() {
         _connectionReady = false;
         _status = 'فشل اختبار الاتصال. إعداداتك المحفوظة لم تُحذف.';
         _error = error.message;
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() {
+      this._setState(() {
         _connectionReady = false;
         _status = 'تعذر اختبار الاتصال. إعداداتك المحفوظة لم تُحذف.';
         _error = 'تحقق من تشغيل FastAPI على 127.0.0.1:8000.';
       });
     } finally {
-      if (mounted) setState(() => _checkingConnection = false);
+      if (mounted) this._setState(() => _checkingConnection = false);
     }
   }
 
@@ -187,7 +187,7 @@ extension _ChatScreenConnection on _ChatScreenState {
               child: const Text('إلغاء'),
             ),
             FilledButton(
-              onPressed: _busy ? null : () => this._connect(context, setDialogState),
+              onPressed: _busy ? null : () => _connect(context, setDialogState),
               child: Text(_busy ? 'جارٍ التحقق…' : 'تحقق واتصل'),
             ),
           ],
@@ -196,7 +196,7 @@ extension _ChatScreenConnection on _ChatScreenState {
     );
     if (mounted) _token.clear();
     if (connected == false && mounted && _api == null) {
-      setState(() => _status = 'لم يتم الاتصال. يمكنك الكتابة بعد إعداد الخادم.');
+      this._setState(() => _status = 'لم يتم الاتصال. يمكنك الكتابة بعد إعداد الخادم.');
     }
   }
 
@@ -209,7 +209,7 @@ extension _ChatScreenConnection on _ChatScreenState {
       _busy = true;
       _error = null;
     });
-    setState(() {
+    this._setState(() {
       _busy = true;
       _error = null;
     });
@@ -242,7 +242,7 @@ extension _ChatScreenConnection on _ChatScreenState {
         // Store only after the server has accepted the token.
         await _storage.write(key: _serverKey, value: requestedUrl);
         await _storage.write(key: _tokenKey, value: enteredToken);
-        await this._syncAndroidHealthToken(enteredToken);
+        await _syncAndroidHealthToken(enteredToken);
         final previous = _api;
         _api = candidate;
         _activeServerUrl = requestedUrl;
@@ -252,45 +252,45 @@ extension _ChatScreenConnection on _ChatScreenState {
 
       if (!mounted || !dialogContext.mounted) return;
       _token.clear();
-      setState(() {
+      this._setState(() {
         _connectionReady = true;
         _status = 'اتصال محلي بخادم RHM جاهز.';
         _error = null;
       });
       connected = true;
-      await this._loadProviders();
-      await this._loadProjects();
-      await this._restoreConversation();
+      await _loadProviders();
+      await _loadProjects();
+      await _restoreConversation();
     } on RhmApiException catch (error) {
       if (dialogContext.mounted) setDialogState(() => _error = error.message);
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) this._setState(() => _error = error.message);
     } catch (_) {
       if (dialogContext.mounted) {
         setDialogState(() => _error = 'تعذر الاتصال أو حفظ الإعدادات بأمان.');
       }
-      if (mounted) setState(() => _error = 'تعذر الاتصال أو حفظ الإعدادات بأمان.');
+      if (mounted) this._setState(() => _error = 'تعذر الاتصال أو حفظ الإعدادات بأمان.');
     } finally {
       candidate?.close();
       if (mounted) {
         if (dialogContext.mounted) setDialogState(() => _busy = false);
-        setState(() => _busy = false);
+        this._setState(() => _busy = false);
       }
     }
     if (connected && dialogContext.mounted) {
       Navigator.pop(dialogContext, true);
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) this._checkForUpdates(silent: true);
+        if (mounted) _checkForUpdates(silent: true);
       });
     }
   }
 
   Future<void> _loadProviders() async {
     if (_api == null) return;
-    setState(() => _loadingProviders = true);
+    this._setState(() => _loadingProviders = true);
     try {
       final values = await _api!.getProviders();
       if (!mounted) return;
-      setState(() {
+      this._setState(() {
         _providers = values;
         final matches = values.where((p) => p.provider == _preferredProvider && p.configured && p.models.isNotEmpty);
         if (matches.isEmpty) { _preferredProvider = null; _preferredModel = null; }
@@ -298,8 +298,8 @@ extension _ChatScreenConnection on _ChatScreenState {
           _preferredModel = null;
         }
       });
-    } on RhmApiException catch (e) { if (mounted) setState(() => _error = e.message); }
-    finally { if (mounted) setState(() => _loadingProviders = false); }
+    } on RhmApiException catch (e) { if (mounted) this._setState(() => _error = e.message); }
+    finally { if (mounted) this._setState(() => _loadingProviders = false); }
   }
 
   Future<void> _loadProjects() async {
@@ -308,7 +308,7 @@ extension _ChatScreenConnection on _ChatScreenState {
     try {
       final projects = await api.listProjects();
       if (!mounted) return;
-      setState(() {
+      this._setState(() {
         _projects = projects;
         if (_composerDraftProjectName != null &&
             _projects.any((project) => project.name == _composerDraftProjectName) &&
@@ -322,7 +322,7 @@ extension _ChatScreenConnection on _ChatScreenState {
         }
       });
     } on RhmApiException catch (error) {
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) this._setState(() => _error = error.message);
     }
   }
 }

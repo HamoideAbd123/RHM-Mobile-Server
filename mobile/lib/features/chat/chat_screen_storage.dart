@@ -8,7 +8,7 @@ extension _ChatScreenStorage on _ChatScreenState {
       final locale = await _storage.read(key: _voiceLocalePreferenceKey);
       final offline = await _storage.read(key: _offlineRecognitionPreferenceKey);
       if (!mounted) return;
-      setState(() {
+      this._setState(() {
         _preferredProvider = provider;
         _preferredModel = model;
         if (locale == 'ar-SA' || locale == 'en-US') _locale = locale!;
@@ -16,7 +16,7 @@ extension _ChatScreenStorage on _ChatScreenState {
       });
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'تعذر استعادة تفضيلات التطبيق. لم تُحذف بيانات الاتصال.');
+        this._setState(() => _error = 'تعذر استعادة تفضيلات التطبيق. لم تُحذف بيانات الاتصال.');
       }
     }
   }
@@ -31,11 +31,11 @@ extension _ChatScreenStorage on _ChatScreenState {
         text: draft,
         selection: TextSelection.collapsed(offset: draft.length),
       );
-      setState(() {
+      this._setState(() {
         _status = 'استُعيدت مسودة رسالة لم تُرسل بعد.';
       });
     } catch (_) {
-      if (mounted) setState(() => _error = 'تعذر استعادة مسودة الرسالة المحفوظة.');
+      if (mounted) this._setState(() => _error = 'تعذر استعادة مسودة الرسالة المحفوظة.');
     }
   }
 
@@ -60,21 +60,21 @@ extension _ChatScreenStorage on _ChatScreenState {
     _composerDraftTimer?.cancel();
     _composerDraftTimer = Timer(const Duration(milliseconds: 500), () {
       _composerDraftTimer = null;
-      unawaited(this._persistComposerDraft(text));
+      unawaited(_persistComposerDraft(text));
     });
   }
 
   Future<void> _persistComposerDraft(String text) async {
     try {
       if (text.trim().isEmpty) {
-        await this._clearComposerDraft();
+        await _clearComposerDraft();
       } else {
-        await this._saveComposerDraft(text);
+        await _saveComposerDraft(text);
       }
     } catch (error) {
       debugPrint('RHM composer draft could not be saved: $error');
       if (mounted) {
-        setState(() => _error = 'تعذر حفظ مسودة الرسالة في التخزين الآمن.');
+        this._setState(() => _error = 'تعذر حفظ مسودة الرسالة في التخزين الآمن.');
       }
     }
   }
@@ -82,7 +82,7 @@ extension _ChatScreenStorage on _ChatScreenState {
   Future<void> _flushComposerDraft() async {
     _composerDraftTimer?.cancel();
     _composerDraftTimer = null;
-    await this._persistComposerDraft(_prompt.text);
+    await _persistComposerDraft(_prompt.text);
   }
 
   Future<void> _persistAppPreferences() async {
@@ -104,7 +104,7 @@ extension _ChatScreenStorage on _ChatScreenState {
         value: _offlineRecognition ? 'true' : 'false',
       );
     } catch (_) {
-      if (mounted) setState(() => _error = 'تعذر حفظ تفضيلات التطبيق في التخزين الآمن.');
+      if (mounted) this._setState(() => _error = 'تعذر حفظ تفضيلات التطبيق في التخزين الآمن.');
     }
   }
 
@@ -122,17 +122,17 @@ extension _ChatScreenStorage on _ChatScreenState {
       if (conversationId != _conversationId) {
         final pendingConversation = _conversations.where((item) => item.id == conversationId);
         if (pendingConversation.isEmpty) {
-          await this._clearPendingTurn();
+          await _clearPendingTurn();
           return;
         }
-        await this._openConversation(
+        await _openConversation(
           pendingConversation.first,
           refreshList: false,
           force: true,
         );
       }
       if (!mounted || conversationId != _conversationId) return;
-      setState(() {
+      this._setState(() {
         _pendingRequestId = requestId;
         _pendingPrompt = prompt;
         _pendingConversationId = conversationId;
@@ -147,7 +147,7 @@ extension _ChatScreenStorage on _ChatScreenState {
         _status = 'هناك رسالة لم يكتمل تأكيد إرسالها. أعد إرسالها لاستخدام نفس الطلب دون تكرار.';
       });
     } catch (_) {
-      if (mounted) setState(() => _error = 'تعذر استعادة مسودة الرسالة غير المكتملة.');
+      if (mounted) this._setState(() => _error = 'تعذر استعادة مسودة الرسالة غير المكتملة.');
     }
   }
 
@@ -211,7 +211,7 @@ extension _ChatScreenStorage on _ChatScreenState {
       ),
     );
     if (discard != true) return false;
-    await this._clearPendingTurn();
+    await _clearPendingTurn();
     return true;
   }
 }
