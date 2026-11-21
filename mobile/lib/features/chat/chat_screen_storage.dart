@@ -8,7 +8,7 @@ extension _ChatScreenStorage on _ChatScreenState {
       final locale = await _ChatScreenState._storage.read(key: _ChatScreenState._voiceLocalePreferenceKey);
       final offline = await _ChatScreenState._storage.read(key: _ChatScreenState._offlineRecognitionPreferenceKey);
       if (!mounted) return;
-      this._setState(() {
+      _setState(() {
         _preferredProvider = provider;
         _preferredModel = model;
         if (locale == 'ar-SA' || locale == 'en-US') _locale = locale!;
@@ -16,7 +16,7 @@ extension _ChatScreenStorage on _ChatScreenState {
       });
     } catch (_) {
       if (mounted) {
-        this._setState(() => _error = 'تعذر استعادة تفضيلات التطبيق. لم تُحذف بيانات الاتصال.');
+        _setState(() => _error = 'تعذر استعادة تفضيلات التطبيق. لم تُحذف بيانات الاتصال.');
       }
     }
   }
@@ -31,11 +31,11 @@ extension _ChatScreenStorage on _ChatScreenState {
         text: draft,
         selection: TextSelection.collapsed(offset: draft.length),
       );
-      this._setState(() {
+      _setState(() {
         _status = 'استُعيدت مسودة رسالة لم تُرسل بعد.';
       });
     } catch (_) {
-      if (mounted) this._setState(() => _error = 'تعذر استعادة مسودة الرسالة المحفوظة.');
+      if (mounted) _setState(() => _error = 'تعذر استعادة مسودة الرسالة المحفوظة.');
     }
   }
 
@@ -74,7 +74,7 @@ extension _ChatScreenStorage on _ChatScreenState {
     } catch (error) {
       debugPrint('RHM composer draft could not be saved: $error');
       if (mounted) {
-        this._setState(() => _error = 'تعذر حفظ مسودة الرسالة في التخزين الآمن.');
+        _setState(() => _error = 'تعذر حفظ مسودة الرسالة في التخزين الآمن.');
       }
     }
   }
@@ -104,7 +104,7 @@ extension _ChatScreenStorage on _ChatScreenState {
         value: _offlineRecognition ? 'true' : 'false',
       );
     } catch (_) {
-      if (mounted) this._setState(() => _error = 'تعذر حفظ تفضيلات التطبيق في التخزين الآمن.');
+      if (mounted) _setState(() => _error = 'تعذر حفظ تفضيلات التطبيق في التخزين الآمن.');
     }
   }
 
@@ -132,7 +132,7 @@ extension _ChatScreenStorage on _ChatScreenState {
         );
       }
       if (!mounted || conversationId != _conversationId) return;
-      this._setState(() {
+      _setState(() {
         _pendingRequestId = requestId;
         _pendingPrompt = prompt;
         _pendingConversationId = conversationId;
@@ -147,7 +147,7 @@ extension _ChatScreenStorage on _ChatScreenState {
         _status = 'هناك رسالة لم يكتمل تأكيد إرسالها. أعد إرسالها لاستخدام نفس الطلب دون تكرار.';
       });
     } catch (_) {
-      if (mounted) this._setState(() => _error = 'تعذر استعادة مسودة الرسالة غير المكتملة.');
+      if (mounted) _setState(() => _error = 'تعذر استعادة مسودة الرسالة غير المكتملة.');
     }
   }
 
