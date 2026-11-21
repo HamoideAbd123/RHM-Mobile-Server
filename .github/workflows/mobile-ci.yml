@@ -69,6 +69,8 @@ jobs:
           AAPT="$(find "${ANDROID_HOME}/build-tools" -type f -name aapt | sort -V | tail -n 1)"
           test -n "${AAPT}"
           "${AAPT}" dump badging "${APK}" | grep -F "package: name='com.rhm.rhm_mobile.debug'"
+          "${AAPT}" dump permissions "${APK}" | grep -F "android.permission.REQUEST_INSTALL_PACKAGES"
+          "${AAPT}" dump permissions "${APK}" | grep -F "android.permission.POST_NOTIFICATIONS"
 
       - name: Upload test APK
         uses: actions/upload-artifact@v4
