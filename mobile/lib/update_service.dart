@@ -74,7 +74,6 @@ class RhmUpdateService {
   final http.Client _http;
   final Directory? _downloadDirectory;
   StreamSubscription<List<int>>? _activeDownloadSubscription;
-  IOSink? _activeDownloadSink;
   Completer<void>? _activeDownloadCompleter;
   bool _cancelRequested = false;
   bool _closed = false;
@@ -441,7 +440,6 @@ class RhmUpdateService {
     final completer = Completer<void>();
     StreamSubscription<List<int>>? subscription;
     var received = initialBytes;
-    _activeDownloadSink = sink;
     _activeDownloadCompleter = completer;
 
     subscription = response.stream.listen(
@@ -483,7 +481,6 @@ class RhmUpdateService {
       await subscription?.cancel();
       await sink.close();
       _activeDownloadSubscription = null;
-      _activeDownloadSink = null;
       _activeDownloadCompleter = null;
     }
   }
