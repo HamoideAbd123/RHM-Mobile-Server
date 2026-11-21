@@ -1,6 +1,6 @@
 part of '../api_client.dart';
 
-extension _RhmConversationsApi on RhmApiClient {
+extension RhmConversationsApi on RhmApiClient {
   Future<List<RhmConversation>> listConversations({int limit = 50}) async {
     final response = await this._send(
       http.Request('GET', this._endpoint('conversations?limit=$limit')),

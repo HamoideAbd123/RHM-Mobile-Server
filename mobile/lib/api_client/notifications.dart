@@ -1,6 +1,6 @@
 part of '../api_client.dart';
 
-extension _RhmNotificationsApi on RhmApiClient {
+extension RhmNotificationsApi on RhmApiClient {
   Future<Map<String, dynamic>> getNotifications({
     int limit = 100,
     bool unreadOnly = false,

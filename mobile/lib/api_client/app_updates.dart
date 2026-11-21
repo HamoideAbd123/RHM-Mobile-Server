@@ -1,6 +1,6 @@
 part of '../api_client.dart';
 
-extension _RhmAppUpdatesApi on RhmApiClient {
+extension RhmAppUpdatesApi on RhmApiClient {
   Future<void> reportAppUpdateAvailable(String version) async {
     final request = http.Request('POST', this._endpoint('mobile/updates/notifications'))
       ..headers['content-type'] = 'application/json'

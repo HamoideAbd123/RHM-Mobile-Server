@@ -1,6 +1,6 @@
 part of '../api_client.dart';
 
-extension _RhmProvidersChatApi on RhmApiClient {
+extension RhmProvidersChatApi on RhmApiClient {
   Future<void> checkConnection() async {
     final response = await this._send(
       http.Request('GET', this._endpoint('mobile/health')),

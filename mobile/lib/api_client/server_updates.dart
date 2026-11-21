@@ -1,6 +1,6 @@
 part of '../api_client.dart';
 
-extension _RhmServerUpdatesApi on RhmApiClient {
+extension RhmServerUpdatesApi on RhmApiClient {
   Future<RhmServerUpdateSnapshot> getServerUpdateStatus() async {
     final response = await this._send(
       http.Request('GET', this._endpoint('server-update/status')),

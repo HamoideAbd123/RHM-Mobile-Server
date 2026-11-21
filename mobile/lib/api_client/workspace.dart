@@ -1,6 +1,6 @@
 part of '../api_client.dart';
 
-extension _RhmWorkspaceApi on RhmApiClient {
+extension RhmWorkspaceApi on RhmApiClient {
   Future<List<RhmProject>> listProjects() async {
     final response = await this._send(http.Request('GET', this._endpoint('projects')));
     if (response.statusCode != 200) {

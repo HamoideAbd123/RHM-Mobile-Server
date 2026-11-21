@@ -1,6 +1,6 @@
 part of '../api_client.dart';
 
-extension _RhmMcpApi on RhmApiClient {
+extension RhmMcpApi on RhmApiClient {
   Future<List<RhmMcpServer>> listMcpServers() async {
     final response = await this._send(
       http.Request('GET', this._endpoint('mcp-client/servers')),
