@@ -37,6 +37,15 @@ class MainActivity : FlutterActivity() {
                         }
                     }
 
+                    "clearHealthToken" -> {
+                        try {
+                            RhmHealthTokenStore.clear(this)
+                            result.success(null)
+                        } catch (_: Exception) {
+                            result.error("health_token_clear_failed", "تعذر مسح رمز فحص الصحة القديم.", null)
+                        }
+                    }
+
                     "setHealthCredentials" -> {
                         val credentials = call.arguments as? Map<*, *>
                         val accessToken = credentials?.get("accessToken") as? String
