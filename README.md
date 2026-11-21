@@ -78,9 +78,15 @@ The backend must remain bound to loopback for this local-only mode. Do not expos
 
 See [API contract](docs/API_CONTRACT.md) and [Security policy](SECURITY.md).
 
-## Update compatibility
+## Independent Android app updates
 
-The imported app has an authenticated in-app update client that currently talks to update-proxy routes on the private RHM backend. Those routes currently read private-repository release metadata. Before publishing APK releases from this repository, the backend's allow-listed release source and asset validation must be deliberately migrated to this repository. Do not assume that a GitHub release in this public repository will automatically appear in the installed app.
+App release discovery and APK delivery are owned by the Flutter update manager and this repository's GitHub Releases. They do not depend on the RHM FastAPI service, its saved URL, its bearer token, or its availability.
+
+The app checks the latest stable release at the fixed GitHub API endpoint for `HamoideAbd123/RHM-Mobile-Server`. It accepts only the exact `app-release.apk` and `app-release.apk.sha256` assets attached to that repository's matching release tag. Downloads are streamed to a temporary file, can resume through HTTP Range requests, and are rejected unless the final size and SHA-256 match the release metadata. The verified APK is handed to Android's package installer; Android still requires the user to approve installation.
+
+WorkManager performs a best-effort background release check every 12 hours when network connectivity is available. A foreground check runs on app launch, on resume according to the six-hour interval, and when the user taps the update action. Android may defer background work, and notification permission must be allowed.
+
+A SHA-256 checksum detects corruption but is not a substitute for trusted Android signing. A production release must retain the existing application ID `com.rhm.rhm_mobile` and the existing signing certificate. Never place the private signing key in this public repository. See [Release and signing](docs/RELEASE_AND_SIGNING.md).
 
 ## Important limitations
 
