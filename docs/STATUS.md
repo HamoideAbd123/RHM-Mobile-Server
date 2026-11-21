@@ -1,66 +1,73 @@
 # RHM Mobile Server — verified status
 
-**Status date:** 2026-11-20  
-**Work branch:** bootstrap/import-flutter-client-2026-11-20  
-**Private core:** HamoideAbd123/rhm-personal-ai-core (authoritative backend)  
-**Public mobile:** HamoideAbd123/RHM-Mobile-Server (Android/Flutter integration)
+**Status date:** 2026-11-21  
+**Work branch:** `bootstrap/import-flutter-client-2026-11-20`  
+**Verified code commit:** `cc4b621074ae9e0be81b01163c22a5c3a10f330d`  
+**Private core:** `HamoideAbd123/rhm-personal-ai-core` (authoritative backend)  
+**Public mobile:** `HamoideAbd123/RHM-Mobile-Server` (Android/Flutter integration)
 
-## Verified baseline
+## Current CI verification
 
-- The public mobile repository contains the transferred Flutter client and Kotlin Android host templates.
-- The private RHM core remains authoritative for FastAPI, Uvicorn, PostgreSQL, Next.js, application logic, configuration and secrets.
-- A previous public CI run produced an ARM64 debug APK, but the latest CI run failed in a Flutter settings widget test because the required `onOpenAndroidRuntime` callback was missing. The test has now been corrected in this branch; CI must be rerun before claiming a passing build.
-- The current PR remains open. No repository main branch has been modified or merged by this work.
+GitHub Actions run [#134](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44945841695) completed successfully on the verified code commit:
 
-## Runtime architecture decision
+- Flutter unit/widget tests: passed.
+- Flutter static analysis: passed.
+- Generated Android host preparation and dependency resolution: passed.
+- Android ARM64 debug APK build: passed.
+- Debug package identity verification: passed (`com.rhm.rhm_mobile.debug`).
+- Artifact upload: passed.
 
-The Android runtime must launch the **existing private RHM server supervisor**, not a standalone Uvicorn command:
+The uploaded artifact is `rhm-mobile-android-arm64-debug` (63,403,642 bytes, about 60.5 MiB). Its SHA-256 is:
 
 ```text
-Android BOOT_COMPLETED
-  -> Kotlin RhmBootReceiver
-  -> Kotlin RhmRuntimeService (foreground notification)
-  -> Termux RUN_COMMAND (fixed allow-listed action)
-  -> Debian PRoot
-  -> existing .venv Python
-  -> rhm.cli server-update supervise
-       -> FastAPI/Uvicorn on 127.0.0.1:8000
-       -> Next.js production frontend on 127.0.0.1:3000 (when a valid production build exists)
-       -> existing PostgreSQL cluster (start existing offline cluster when pg_ctlcluster is available)
+fd86fcab3fdb897f5c0b1b90b0d4ea7e17ea70389a15053587eb7a412ae5b043
 ```
 
-This reuses `rhm/server_supervisor.py` and `rhm/frontend_runtime.py` from the private core. The supervisor already restarts an exited backend process and maintains the Next.js frontend. Kotlin adds authenticated FastAPI health monitoring and restarts the whole supervisor when the endpoint remains unavailable.
+The artifact expires on **2026-12-05 20:27 UTC**. It is a **debug/test APK**, not a production-signed release. Its package ID is `com.rhm.rhm_mobile.debug`; it must not be treated as an in-place update for the production package `com.rhm.rhm_mobile`.
 
-## Implemented in this branch (CI/device verification still required)
+## Flutter refactor completed on this branch
 
-- Kotlin foreground service polls `GET /mobile/health` every 20 seconds using the token encrypted by Android Keystore (AES-GCM).
-- Health states are distinct: healthy, unauthorized, token missing, invalid response, unavailable.
-- A rejected or missing token does **not** trigger process restarts.
-- When health is unavailable, Kotlin applies bounded recovery: initial-start failures require five consecutive failed checks; an already healthy server requires two. Recovery delay increases through 30, 60, 120 and 300 seconds.
-- Recovery count, last recovery time/action and health state are exposed to Flutter.
-- Enabling Backend autostart now starts the foreground manager immediately and persists the boot preference. Boot receiver starts when either monitor or backend autostart is enabled.
-- Manual Backend stop disables backend autostart to prevent the monitor from immediately relaunching a deliberately stopped service.
-- Termux wrapper now invokes the existing RHM server supervisor (backend + frontend), starts existing offline PostgreSQL clusters when PostgreSQL cluster tools exist, and validates PID plus Linux process start time and command identity before status/stop operations.
-- Flutter settings test now supplies the required Android runtime callback.
-- No arbitrary shell command or model-generated command is accepted by the Android bridge.
+- Root `mobile/lib/main.dart` is now a small startup/bootstrap entry; the app shell is in `app/rhm_app.dart`.
+- Chat behavior is split into six same-library feature modules: storage/preferences, update polling, connection/bootstrap, conversations, voice and navigation.
+- Chat message model, Markdown message bubble, composer, suggestion chip and app-version footer are separate widgets/modules.
+- `RhmApiClient` remains the authenticated loopback transport facade; endpoint methods are organized by provider/chat, server updates, notifications, app updates, MCP, conversations and workspace.
+- API DTO models are separated into `api_models.dart`, re-exported from `api_client.dart`.
+- Workspace screens are split by domain: projects, tasks, memories, agents, audit, devices and voice diagnostics. `workspace_screens.dart` remains as a compatibility export.
+- Shared semantic theme tokens, four primary navigation destinations, adaptive wide-screen navigation and Android touch-target rules are maintained.
+- Composer drafts are debounced, flushed on app background, and retain project context and a next draft while a turn is in progress.
+
+Detailed references:
+- [Flutter client architecture](FLUTTER_CLIENT_ARCHITECTURE.md)
+- [Refactor report](REFACTOR_REPORT.md)
+
+## Runtime and data boundary
+
+- The private RHM core remains authoritative for FastAPI, Uvicorn, PostgreSQL, Next.js, business logic, provider credentials and private operational configuration.
+- The public mobile repository contains the Flutter client and Kotlin Android runtime-host integration only.
+- The client continues to use the existing same-device loopback API at `127.0.0.1:8000` with the existing bearer-token contract.
+- This Flutter refactor did not change backend routes, API payloads, database schemas, migrations, provider routing, web UI or private signing material.
+- No provider key, API token file, private environment file, database dump or signing key was copied into this public repository.
+
+## GitHub review boundary
+
+- PR #2 remains open and unmerged: https://github.com/HamoideAbd123/RHM-Mobile-Server/pull/2
+- Work is on `bootstrap/import-flutter-client-2026-11-20`, separate from `main`.
+- No merge to `main` was performed.
+- PR #2 has existing base-branch divergence and remains an explicit review/merge decision for the owner.
 
 ## Remaining acceptance gates
 
-1. Run public CI: Flutter tests, analysis, Kotlin/Android compilation, ARM64 debug build and package identity check.
-2. Review and merge PR #2 only after CI and source review are clean.
-3. Install the updated Termux wrapper and configure the real Debian checkout path in `~/.config/rhm-runtime.conf`.
-4. Verify Termux RUN_COMMAND permission and `allow-external-apps=true`.
-5. On Huawei Android 10, verify Start/Stop/Restart, authenticated health, invalid-token behavior, server crash recovery and supervisor/frontend recovery.
-6. Verify existing PostgreSQL rows, RHM conversations, memory, projects, settings and credentials remain unchanged.
-7. Enable Backend autostart and reboot the handset; verify service notification and FastAPI health without manually opening Termux.
-8. Verify the local Next.js production frontend at `127.0.0.1:3000`. It requires an existing successful production build in the private core checkout; the supervisor does not silently overwrite/build the frontend on every boot.
-9. Build a signed ARM64 release from the public mobile source using the **existing signing secrets held only in the private core repository**. Verify package ID and signer fingerprint before installing.
-10. Run on-device chat and web smoke tests; record screenshots/logs and the exact tested APK SHA-256.
+1. Install the debug/test APK only as a separate test build where package identity permits; do not use it as a production update.
+2. On the Huawei Android 10 handset, verify chat history, new conversations, rename/delete confirmations, long messages, Arabic/English direction, keyboard scrolling and draft restoration.
+3. Verify project context and pending-turn recovery through real server responses and an interrupted request.
+4. Verify voice recognition, speech output, stop-speaking, permission denial and offline behavior on the target handset.
+5. Verify connection settings, provider/model changes, theme persistence, update discovery and notification navigation.
+6. Verify Termux RUN_COMMAND, authenticated health, bounded supervisor recovery, screen-off and reboot behavior on the handset. CI does not prove Android/EMUI lifecycle behavior.
+7. Produce a production-signed ARM64 APK through the protected private-core signing workflow, then compare signer fingerprint and production package identity before any in-place installation.
+8. Confirm existing conversations, memory, projects, settings, credentials and PostgreSQL rows remain intact after the signed update.
 
-## Signing and release
+## Signing and release policy
 
-- Existing signing secrets are configured only in the private RHM core repository and are not readable through this workflow.
-- Do not copy signing keys or passwords into this public repository.
-- A dedicated private-core workflow is required to check out the public mobile source and sign it using the existing protected secrets. It must output a signed artifact without publishing secrets or generating a new key.
-- The earlier test APK has the separate debug package identity `com.rhm.rhm_mobile.debug`; it is not a signed production update and cannot be upgraded in place using the production package identity.
-- No signed release or certificate-matched update is claimed until the private signing workflow and on-device signer comparison pass.
+- Existing signing secrets remain only in the private RHM core repository.
+- Do not create or upload a new signing key for this public repository.
+- The public CI artifact is debug-only. A production release requires the existing signing identity, production package ID `com.rhm.rhm_mobile`, signer comparison and a tested data-preserving upgrade.
