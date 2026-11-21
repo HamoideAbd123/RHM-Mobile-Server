@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -11,7 +10,6 @@ export 'api_models.dart';
 part 'api_client/providers_chat.dart';
 part 'api_client/server_updates.dart';
 part 'api_client/notifications.dart';
-part 'api_client/app_updates.dart';
 part 'api_client/mcp.dart';
 part 'api_client/conversations.dart';
 part 'api_client/workspace.dart';
