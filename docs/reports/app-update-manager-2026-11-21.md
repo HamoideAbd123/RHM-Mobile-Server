@@ -59,11 +59,16 @@ The artifact is a **debug APK** with package ID `com.rhm.rhm_mobile.debug`. It i
 
 - The new public mobile repository currently has no stable GitHub Release: `GET /releases/latest` returned HTTP 404 on 2026-11-21.
 - The existing production package ID `com.rhm.rhm_mobile` and the exact signing certificate fingerprint must be verified against a trusted installed production APK.
-- The existing signing key must remain in the protected private signing workflow. Do not generate a replacement keystore or store signing secrets in this public repository.
+- The existing signing key must remain in a protected private signing workflow. The cleanup PR #47 removed the previous `.github/workflows/mobile-server-signed-build.yml`; it must be restored or replaced in Core without restoring a Flutter source copy. The old workflow uploaded only an Actions artifact, so publishing a GitHub Release here also requires an authorized cross-repository release credential or a manual upload. Do not generate a replacement keystore or store signing secrets in this public repository.
 - A signed APK must be published as the release's `app-release.apk` asset with `app-release.apk.sha256`.
 - Huawei Android 10 device tests remain outstanding: interruption/resume on real connectivity, checksum rejection, install-source permission, signature continuity, update-in-place, and preservation of chat history, credentials, preferences and local data.
 - No production version bump, stable GitHub Release or release Tag was created. Creating a tag now would falsely label a debug build as a production phone release.
 
 ## Merge status
 
-The implementation remains on the feature branch above. It has not yet been merged into `main`. The app-import PR #2 is still open and has a base-branch divergence that must be reconciled with the latest `main` head. The next repository operation is to reconcile that branch, run CI on the reconciled commit, and merge PR #2 only after the checks are green.
+The implementation is on the feature branch above and has not yet been merged into `main`. The app-import PR #2 is still open. Its source branch is being reconciled with the latest `main` head by a merge commit; CI must pass on that reconciled branch before PR #2 is merged.
+
+
+## Single-source ownership check
+
+The cleanup PR [Core #47](https://github.com/HamoideAbd123/rhm-personal-ai-core/pull/47) was merged on 2026-11-21. A follow-up read of Core `main` confirmed that `mobile/pubspec.yaml` is absent. The mobile repository is the sole source for Flutter application code; Core retains backend API contracts only.

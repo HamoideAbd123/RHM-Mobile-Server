@@ -48,7 +48,7 @@ Architecture and delivery records:
 - [x] Declare `REQUEST_INSTALL_PACKAGES` and add a CI manifest-permission assertion for sideloaded updates.
 - [x] Pass the Flutter tests, static analysis, ARM64 debug build, package identity and install/notification permission assertions in [CI run #44953230929](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44953230929).
 - [ ] Complete on-device update tests on Huawei Android 10: Wi-Fi loss/resume, checksum rejection, installer approval, update-in-place and data preservation.
-- [ ] Enable signed production publication only after the original package ID and certificate fingerprint are verified. Never create a replacement keystore.
+- [ ] Restore/replace the private Core signing workflow and enable release publication to this repository only after the original package ID and certificate fingerprint are verified. Never create a replacement keystore.
 
 The updater is independent of Core server updates. `/server-update/*` continues to manage the local Python/Next.js runtime only.
 

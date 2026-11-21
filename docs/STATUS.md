@@ -36,7 +36,7 @@ This is a **debug/test APK**, not a production update. Its package ID is `com.rh
 - Root `mobile/lib/main.dart` is now a small startup/bootstrap entry; the app shell is in `app/rhm_app.dart`.
 - Chat behavior is split into six same-library feature modules: storage/preferences, update polling, connection/bootstrap, conversations, voice and navigation.
 - Chat message model, Markdown message bubble, composer, suggestion chip and app-version footer are separate widgets/modules.
-- `RhmApiClient` remains the authenticated loopback transport facade; endpoint methods are organized by provider/chat, server updates, notifications, app updates, MCP, conversations and workspace.
+- `RhmApiClient` remains the authenticated loopback transport facade; endpoint methods are organized by provider/chat, server updates, notifications, MCP, conversations and workspace. App APK updates no longer use a `RhmApiClient` endpoint.
 - API DTO models are separated into `api_models.dart`, re-exported from `api_client.dart`.
 - Workspace screens are split by domain: projects, tasks, memories, agents, audit, devices and voice diagnostics. `workspace_screens.dart` remains as a compatibility export.
 - Shared semantic theme tokens, four primary navigation destinations, adaptive wide-screen navigation and Android touch-target rules are maintained.
@@ -76,4 +76,6 @@ Detailed references:
 
 - Existing signing secrets remain only in the private RHM core repository.
 - Do not create or upload a new signing key for this public repository.
-- The public CI artifact is debug-only. A production release requires the existing signing identity, production package ID `com.rhm.rhm_mobile`, signer comparison and a tested data-preserving upgrade.
+- The Core cleanup PR #47 removed `.github/workflows/mobile-server-signed-build.yml` along with the duplicated Flutter source. That signing workflow must be restored or replaced in Core; it should check out this public repository at a reviewed ref and use the existing private keystore secrets without copying app source back into Core.
+- The previous private signing workflow uploaded an Actions artifact only; it did not publish a GitHub Release in this mobile repository. A release publisher therefore needs an authorized cross-repository release credential, or the signed APK and checksum must be uploaded manually to a GitHub Release.
+- A production release requires the existing signing identity, production package ID `com.rhm.rhm_mobile`, a mandatory signer-fingerprint comparison and a tested data-preserving upgrade.
