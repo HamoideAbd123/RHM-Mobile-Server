@@ -157,7 +157,7 @@ class RhmRuntimeService : Service() {
     private fun runHealthCheckSafely() {
         val prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val healthState = try {
-            authenticatedFastApiHealth()
+            localFastApiHealth()
         } catch (_: Exception) {
             "unavailable"
         }
@@ -250,29 +250,22 @@ class RhmRuntimeService : Service() {
         }
     }
 
-    private fun authenticatedFastApiHealth(): String {
-        val token = RhmHealthTokenStore.read(this) ?: return "token_missing"
+    private fun localFastApiHealth(): String {
         var connection: HttpURLConnection? = null
         return try {
-            connection = URL("http://127.0.0.1:8000/mobile/health").openConnection() as HttpURLConnection
+            connection = URL("http://127.0.0.1:8000/health").openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
             connection.connectTimeout = 1800
             connection.readTimeout = 1800
             connection.instanceFollowRedirects = false
-            connection.setRequestProperty("Authorization", "Bearer $token")
             connection.setRequestProperty("Accept", "application/json")
             val code = connection.responseCode
-            if (code == HttpURLConnection.HTTP_UNAUTHORIZED || code == HttpURLConnection.HTTP_FORBIDDEN) {
-                "unauthorized"
-            } else if (code != HttpURLConnection.HTTP_OK) {
+            if (code != HttpURLConnection.HTTP_OK) {
                 "unavailable"
             } else {
                 val body = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
                 val payload = JSONObject(body)
-                if (
-                    payload.optString("status") == "ok" &&
-                    payload.optString("transport") == "loopback"
-                ) "healthy" else "invalid_response"
+                if (payload.optString("status") == "ok") "healthy" else "invalid_response"
             }
         } catch (_: Exception) {
             "unavailable"
@@ -306,7 +299,7 @@ class RhmRuntimeService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val text = when (healthState) {
-            "healthy" -> "FastAPI جاهز: فحص المصادقة ناجح."
+            "healthy" -> "FastAPI المحلي يستجيب بصورة سليمة."
             "unauthorized" -> "FastAPI رفض رمز الوصول المحفوظ."
             "token_missing" -> "بانتظار مزامنة رمز الوصول الآمن."
             "invalid_response" -> "استجابة فحص FastAPI غير صالحة."
