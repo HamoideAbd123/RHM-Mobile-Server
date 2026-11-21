@@ -153,6 +153,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     });
     _serverUrl.text = RhmApiClient.defaultServerUrl;
     _bootstrap();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _checkForUpdates(silent: true);
+    });
     _updateTimer = Timer.periodic(_updateCheckInterval, (_) {
       if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
         _checkForUpdates(silent: true);
