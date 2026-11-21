@@ -1,7 +1,7 @@
 part of 'chat_screen.dart';
 
 extension _ChatScreenUpdates on _ChatScreenState {
-  Future<void> _checkForUpdates({bool silent = false}) async {
+  Future<void> this._checkForUpdates({bool silent = false}) async {
     if (_checkingUpdate) return;
     final api = _api;
     if (api == null) {
@@ -14,7 +14,7 @@ extension _ChatScreenUpdates on _ChatScreenState {
       }
       return;
     }
-    _setState(() => _checkingUpdate = true);
+    this._setState(() => _checkingUpdate = true);
     final updater = RhmUpdateService();
     try {
       final update = await updater.checkForUpdate(api);
@@ -109,11 +109,11 @@ extension _ChatScreenUpdates on _ChatScreenState {
         );
       }
     } finally {
-      if (mounted) _setState(() => _checkingUpdate = false);
+      if (mounted) this._setState(() => _checkingUpdate = false);
     }
   }
 
-  Future<void> _pollServerUpdateNotifications() async {
+  Future<void> this._pollServerUpdateNotifications() async {
     final api = _api;
     if (api == null || !_connectionReady ||
         WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
@@ -128,7 +128,7 @@ extension _ChatScreenUpdates on _ChatScreenState {
           ? preferences['channels'] as Map<String, dynamic>
           : const <String, dynamic>{};
       if (!mounted) return;
-      _setState(() {
+      this._setState(() {
         _unreadNotifications = channels['in_app'] == true &&
                 feed['unread_count'] is int
             ? feed['unread_count'] as int
@@ -139,7 +139,7 @@ extension _ChatScreenUpdates on _ChatScreenState {
     }
   }
 
-  Future<void> _syncAndroidHealthToken(String token) async {
+  Future<void> this._syncAndroidHealthToken(String token) async {
     try {
       await RhmAndroidRuntimeBridge().setHealthToken(token);
     } catch (_) {

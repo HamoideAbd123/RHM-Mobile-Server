@@ -1,14 +1,14 @@
 part of 'chat_screen.dart';
 
 extension _ChatScreenStorage on _ChatScreenState {
-  Future<void> _restoreAppPreferences() async {
+  Future<void> this._restoreAppPreferences() async {
     try {
       final provider = await _ChatScreenState._storage.read(key: _ChatScreenState._providerPreferenceKey);
       final model = await _ChatScreenState._storage.read(key: _ChatScreenState._modelPreferenceKey);
       final locale = await _ChatScreenState._storage.read(key: _ChatScreenState._voiceLocalePreferenceKey);
       final offline = await _ChatScreenState._storage.read(key: _ChatScreenState._offlineRecognitionPreferenceKey);
       if (!mounted) return;
-      _setState(() {
+      this._setState(() {
         _preferredProvider = provider;
         _preferredModel = model;
         if (locale == 'ar-SA' || locale == 'en-US') _locale = locale!;
@@ -16,12 +16,12 @@ extension _ChatScreenStorage on _ChatScreenState {
       });
     } catch (_) {
       if (mounted) {
-        _setState(() => _error = 'تعذر استعادة تفضيلات التطبيق. لم تُحذف بيانات الاتصال.');
+        this._setState(() => _error = 'تعذر استعادة تفضيلات التطبيق. لم تُحذف بيانات الاتصال.');
       }
     }
   }
 
-  Future<void> _restoreComposerDraft() async {
+  Future<void> this._restoreComposerDraft() async {
     try {
       final draft = await _ChatScreenState._storage.read(key: _ChatScreenState._composerDraftKey);
       final projectName = await _ChatScreenState._storage.read(key: _ChatScreenState._composerDraftProjectKey);
@@ -31,15 +31,15 @@ extension _ChatScreenStorage on _ChatScreenState {
         text: draft,
         selection: TextSelection.collapsed(offset: draft.length),
       );
-      _setState(() {
+      this._setState(() {
         _status = 'استُعيدت مسودة رسالة لم تُرسل بعد.';
       });
     } catch (_) {
-      if (mounted) _setState(() => _error = 'تعذر استعادة مسودة الرسالة المحفوظة.');
+      if (mounted) this._setState(() => _error = 'تعذر استعادة مسودة الرسالة المحفوظة.');
     }
   }
 
-  Future<void> _saveComposerDraft(String text) async {
+  Future<void> this._saveComposerDraft(String text) async {
     await _ChatScreenState._storage.write(key: _ChatScreenState._composerDraftKey, value: text);
     await _ChatScreenState._storage.write(
       key: _ChatScreenState._composerDraftProjectKey,
@@ -48,7 +48,7 @@ extension _ChatScreenStorage on _ChatScreenState {
     _composerDraftProjectName = _selectedProjectName;
   }
 
-  Future<void> _clearComposerDraft() async {
+  Future<void> this._clearComposerDraft() async {
     _composerDraftTimer?.cancel();
     _composerDraftTimer = null;
     await _ChatScreenState._storage.delete(key: _ChatScreenState._composerDraftKey);
@@ -56,36 +56,36 @@ extension _ChatScreenStorage on _ChatScreenState {
     _composerDraftProjectName = null;
   }
 
-  void _scheduleComposerDraftSave(String text) {
+  void this._scheduleComposerDraftSave(String text) {
     _composerDraftTimer?.cancel();
     _composerDraftTimer = Timer(const Duration(milliseconds: 500), () {
       _composerDraftTimer = null;
-      unawaited(_persistComposerDraft(text));
+      unawaited(this._persistComposerDraft(text));
     });
   }
 
-  Future<void> _persistComposerDraft(String text) async {
+  Future<void> this._persistComposerDraft(String text) async {
     try {
       if (text.trim().isEmpty) {
-        await _clearComposerDraft();
+        await this._clearComposerDraft();
       } else {
-        await _saveComposerDraft(text);
+        await this._saveComposerDraft(text);
       }
     } catch (error) {
       debugPrint('RHM composer draft could not be saved: $error');
       if (mounted) {
-        _setState(() => _error = 'تعذر حفظ مسودة الرسالة في التخزين الآمن.');
+        this._setState(() => _error = 'تعذر حفظ مسودة الرسالة في التخزين الآمن.');
       }
     }
   }
 
-  Future<void> _flushComposerDraft() async {
+  Future<void> this._flushComposerDraft() async {
     _composerDraftTimer?.cancel();
     _composerDraftTimer = null;
-    await _persistComposerDraft(_prompt.text);
+    await this._persistComposerDraft(_prompt.text);
   }
 
-  Future<void> _persistAppPreferences() async {
+  Future<void> this._persistAppPreferences() async {
     try {
       if (_preferredProvider == null) {
         await _ChatScreenState._storage.delete(key: _ChatScreenState._providerPreferenceKey);
@@ -104,11 +104,11 @@ extension _ChatScreenStorage on _ChatScreenState {
         value: _offlineRecognition ? 'true' : 'false',
       );
     } catch (_) {
-      if (mounted) _setState(() => _error = 'تعذر حفظ تفضيلات التطبيق في التخزين الآمن.');
+      if (mounted) this._setState(() => _error = 'تعذر حفظ تفضيلات التطبيق في التخزين الآمن.');
     }
   }
 
-  Future<void> _restorePendingTurn() async {
+  Future<void> this._restorePendingTurn() async {
     try {
       final requestId = await _ChatScreenState._storage.read(key: _ChatScreenState._pendingRequestIdKey);
       final prompt = await _ChatScreenState._storage.read(key: _ChatScreenState._pendingPromptKey);
@@ -122,17 +122,17 @@ extension _ChatScreenStorage on _ChatScreenState {
       if (conversationId != _conversationId) {
         final pendingConversation = _conversations.where((item) => item.id == conversationId);
         if (pendingConversation.isEmpty) {
-          await _clearPendingTurn();
+          await this._clearPendingTurn();
           return;
         }
-        await _openConversation(
+        await this._openConversation(
           pendingConversation.first,
           refreshList: false,
           force: true,
         );
       }
       if (!mounted || conversationId != _conversationId) return;
-      _setState(() {
+      this._setState(() {
         _pendingRequestId = requestId;
         _pendingPrompt = prompt;
         _pendingConversationId = conversationId;
@@ -147,11 +147,11 @@ extension _ChatScreenStorage on _ChatScreenState {
         _status = 'هناك رسالة لم يكتمل تأكيد إرسالها. أعد إرسالها لاستخدام نفس الطلب دون تكرار.';
       });
     } catch (_) {
-      if (mounted) _setState(() => _error = 'تعذر استعادة مسودة الرسالة غير المكتملة.');
+      if (mounted) this._setState(() => _error = 'تعذر استعادة مسودة الرسالة غير المكتملة.');
     }
   }
 
-  Future<void> _savePendingTurn({
+  Future<void> this._savePendingTurn({
     required String requestId,
     required String prompt,
     required String conversationId,
@@ -173,7 +173,7 @@ extension _ChatScreenStorage on _ChatScreenState {
     _pendingProjectName = projectName;
   }
 
-  Future<void> _clearPendingTurn() async {
+  Future<void> this._clearPendingTurn() async {
     await _ChatScreenState._storage.delete(key: _ChatScreenState._pendingRequestIdKey);
     await _ChatScreenState._storage.delete(key: _ChatScreenState._pendingPromptKey);
     await _ChatScreenState._storage.delete(key: _ChatScreenState._pendingConversationKey);
@@ -188,7 +188,7 @@ extension _ChatScreenStorage on _ChatScreenState {
     _pendingProjectName = null;
   }
 
-  Future<bool> _confirmDiscardPendingTurn(String action) async {
+  Future<bool> this._confirmDiscardPendingTurn(String action) async {
     if (_pendingRequestId == null) return true;
     final discard = await showDialog<bool>(
       context: context,
@@ -211,7 +211,7 @@ extension _ChatScreenStorage on _ChatScreenState {
       ),
     );
     if (discard != true) return false;
-    await _clearPendingTurn();
+    await this._clearPendingTurn();
     return true;
   }
 }

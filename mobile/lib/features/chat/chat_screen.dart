@@ -36,21 +36,12 @@ part 'chat_screen_conversations.dart';
 part 'chat_screen_voice.dart';
 part 'chat_screen_navigation.dart';
 
-class ChatScreen extends StatefulWidget {
-  const ChatScreen({
-    super.key,
-    required this.themeMode,
-    required this.onThemeModeChanged,
-  });
-
-  final ThemeMode themeMode;
-  final ValueChanged<ThemeMode> onThemeModeChanged;
-
-  @override
-  State<ChatScreen> createState() => _ChatScreenState();
-}
-
 class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
+  void _setState(VoidCallback callback) {
+    if (!mounted) return;
+    setState(callback);
+  }
+
   static const _serverKey = 'rhm_server_url';
   static const _tokenKey = 'rhm_mobile_token';
   static const _providerPreferenceKey = 'rhm_preferred_provider';
@@ -126,27 +117,22 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   Timer? _composerDraftTimer;
   DateTime? _lastUpdateCheckAt;
 
-  void _setState(VoidCallback callback) {
-    if (!mounted) return;
-    setState(callback);
-  }
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _tts.setStartHandler(() {
-      if (mounted) this._setState(() => _speaking = true);
+      if (mounted) setState(() => _speaking = true);
     });
     _tts.setCompletionHandler(() {
-      if (mounted) this._setState(() => _speaking = false);
+      if (mounted) setState(() => _speaking = false);
     });
     _tts.setCancelHandler(() {
-      if (mounted) this._setState(() => _speaking = false);
+      if (mounted) setState(() => _speaking = false);
     });
     _tts.setErrorHandler((_) {
       if (mounted) {
-        this._setState(() {
+        setState(() {
           _speaking = false;
           _error = 'تعذر تشغيل القراءة الصوتية. تحقق من محرك الصوت واللغة المثبتة.';
         });
@@ -283,37 +269,48 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
 
 
-  Widget _buildConnectionRequiredScreen(String destination) => Scaffold(
-        appBar: AppBar(title: Text(destination)),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.link_off_rounded,
-                  size: 42,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: 14),
-                const Text(
-                  'اتصل بخادم RHM لفتح هذه المساحة.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 14),
-                FilledButton.icon(
-                  onPressed: _showConnectionSettings,
-                  icon: const Icon(Icons.settings_ethernet_rounded),
-                  label: const Text('إعداد الاتصال'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
 
-                  overflow: TextOverflow.ellipsis,
+
+
+
+
+
+
+
+  @override
+  Widget build(BuildContext context) {
+    final isWide = MediaQuery.sizeOf(context).width >= RhmDesignTokens.tabletBreakpoint;
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
+    return Scaffold(
+        drawer: _buildSidebar(),
+        appBar: _selectedDestination == 0 ? AppBar(
+          titleSpacing: 16,
+          title: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  size: 23,
+                ),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('RHM', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, letterSpacing: .2)),
+                    const SizedBox(height: 2),
+                    Text(
+                      _conversationTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -396,7 +393,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       RhmPrimaryNavigation(
                         selectedIndex: _selectedDestination,
                         onDestinationSelected: (index) =>
-                            this._setState(() => _selectedDestination = index),
+                            setState(() => _selectedDestination = index),
                       ),
                       const RhmAppVersionFooter(),
                     ],
@@ -407,7 +404,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
               RhmPrimaryNavigation(
                 selectedIndex: _selectedDestination,
                 useRail: true,
-                onDestinationSelected: (index) => this._setState(() => _selectedDestination = index),
+                onDestinationSelected: (index) => setState(() => _selectedDestination = index),
               ),
             Expanded(
               child: IndexedStack(
@@ -535,9 +532,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: [
-                                  RhmSuggestionChip(label: 'خطّط ليومي', icon: Icons.today_rounded, onTap: () => useSuggestion('ساعدني في تنظيم يومي.')),
-                                  RhmSuggestionChip(label: 'طوّر مشروعي', icon: Icons.code_rounded, onTap: () => useSuggestion('ساعدني في تطوير مشروعي خطوة بخطوة.')),
-                                  RhmSuggestionChip(label: 'تعلّم شيئًا', icon: Icons.school_rounded, onTap: () => useSuggestion('اقترح لي درسًا عمليًا أتعلمه اليوم.')),
+                                  RhmSuggestionChip(label: 'خطّط ليومي', icon: Icons.today_rounded, onTap: () => _useSuggestion('ساعدني في تنظيم يومي.')),
+                                  RhmSuggestionChip(label: 'طوّر مشروعي', icon: Icons.code_rounded, onTap: () => _useSuggestion('ساعدني في تطوير مشروعي خطوة بخطوة.')),
+                                  RhmSuggestionChip(label: 'تعلّم شيئًا', icon: Icons.school_rounded, onTap: () => _useSuggestion('اقترح لي درسًا عمليًا أتعلمه اليوم.')),
                                 ],
                               ),
                             ],
@@ -549,8 +546,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     return RhmChatMessageBubble(
                       message: message,
                       textDirection: _directionFor(message.text),
-                      onSpeak: message.isUser ? null : () => speakResponse(message.text),
-                      onCopy: () => copyMessage(message.text),
+                      onSpeak: message.isUser ? null : () => _speakResponse(message.text),
+                      onCopy: () => _copyMessage(message.text),
                     );
                   },
                   ),
@@ -566,14 +563,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 isListening: _listening,
                 isSpeaking: _speaking,
                 onProjectChanged: (value) {
-                  this._setState(() => _selectedProjectName = value);
+                  setState(() => _selectedProjectName = value);
                   _scheduleComposerDraftSave(_prompt.text);
                 },
                 onTextChanged: _scheduleComposerDraftSave,
                 directionFor: _directionFor,
-                onToggleRecording: toggleRecording,
+                onToggleRecording: _toggleRecording,
                 onSend: _sendMessage,
-                onStopSpeaking: stopSpeaking,
+                onStopSpeaking: _stopSpeaking,
               ),
             ],
           ),
