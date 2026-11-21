@@ -22,7 +22,6 @@ import '../../notifications_screen.dart';
 import '../../control_center_screen.dart';
 import '../../android_runtime_screen.dart';
 import '../../mcp_screen.dart';
-import '../../legacy_material_compatibility.dart';
 import '../../more_tab_availability.dart';
 import '../../settings_screen.dart';
 import '../../workspace_screens.dart';
