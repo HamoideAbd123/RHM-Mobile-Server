@@ -170,13 +170,70 @@ class _RhmControlCenterScreenState extends State<RhmControlCenterScreen> {
       ),
     );
     if (approved != true || !mounted) return;
+
     setState(() {
       _installingAppUpdate = true;
       _error = null;
     });
     final updater = RhmUpdateService();
+    final progress = ValueNotifier<double?>(0);
+    var progressDialogOpen = true;
+    final progressDialog = showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('تنزيل تحديث RHM'),
+        content: ValueListenableBuilder<double?>(
+          valueListenable: progress,
+          builder: (context, value, _) {
+            final percent = value == null
+                ? ''
+                : ' ${(value * 100).clamp(0, 100).toStringAsFixed(0)}%';
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                LinearProgressIndicator(value: value),
+                const SizedBox(height: 12),
+                Text('جارٍ تنزيل الإصدار ${update.version}$percent'),
+                const SizedBox(height: 4),
+                const Text(
+                  'يمكن استكمال التنزيل بعد انقطاع الاتصال. لن يُفتح المثبت قبل اكتمال التحقق.',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ],
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              unawaited(updater.cancelDownload());
+              Navigator.pop(dialogContext);
+            },
+            child: const Text('إلغاء التنزيل'),
+          ),
+        ],
+      ),
+    ).whenComplete(() => progressDialogOpen = false);
+
     try {
-      await updater.downloadAndInstall(update);
+      await updater.downloadAndInstall(
+        update,
+        onProgress: (receivedBytes, totalBytes) {
+          progress.value = totalBytes <= 0
+              ? null
+              : receivedBytes / totalBytes;
+        },
+      );
+      if (mounted && progressDialogOpen) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+      await progressDialog;
+    } on RhmUpdateCancelledException {
+      if (mounted) {
+        setState(() => _error = 'تم إلغاء تنزيل التحديث. يمكنك استكماله لاحقًا.');
+      }
     } catch (error) {
       if (mounted) {
         setState(() => _error = error is RhmUpdateException
@@ -184,6 +241,10 @@ class _RhmControlCenterScreenState extends State<RhmControlCenterScreen> {
             : 'تعذر تثبيت تحديث التطبيق.');
       }
     } finally {
+      if (progressDialogOpen && mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+      progress.dispose();
       updater.close();
       if (mounted) setState(() => _installingAppUpdate = false);
     }
