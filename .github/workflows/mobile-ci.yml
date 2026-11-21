@@ -1,0 +1,81 @@
+name: RHM Mobile CI
+
+on:
+  push:
+    branches:
+      - main
+      - "bootstrap/**"
+      - "feature/**"
+      - "fix/**"
+    paths:
+      - "mobile/**"
+      - "scripts/**"
+      - "docs/**"
+      - "SECURITY.md"
+      - ".github/workflows/mobile-ci.yml"
+  pull_request:
+    paths:
+      - "mobile/**"
+      - "scripts/**"
+      - "docs/**"
+      - "SECURITY.md"
+      - ".github/workflows/mobile-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rhm-mobile-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flutter:
+    name: Flutter tests, analysis and Android ARM64 debug build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Prepare generated Android host
+        run: bash ./scripts/prepare_android_project.sh
+
+      - name: Resolve dependencies
+        working-directory: mobile/build/rhm_mobile
+        run: flutter pub get
+
+      - name: Flutter unit and widget tests
+        working-directory: mobile/build/rhm_mobile
+        run: flutter test --reporter expanded
+
+      - name: Flutter static analysis
+        working-directory: mobile/build/rhm_mobile
+        run: flutter analyze
+
+      - name: Build Android ARM64 debug APK
+        working-directory: mobile/build/rhm_mobile
+        run: flutter build apk --debug --target-platform android-arm64
+
+      - name: Verify debug APK package identity
+        working-directory: mobile/build/rhm_mobile
+        run: |
+          APK="build/app/outputs/flutter-apk/app-debug.apk"
+          AAPT="$(find "${ANDROID_HOME}/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          test -n "${AAPT}"
+          "${AAPT}" dump badging "${APK}" | grep -F "package: name='com.rhm.rhm_mobile.debug'"
+          "${AAPT}" dump permissions "${APK}" | grep -F "android.permission.REQUEST_INSTALL_PACKAGES"
+          "${AAPT}" dump permissions "${APK}" | grep -F "android.permission.POST_NOTIFICATIONS"
+
+      - name: Upload test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: rhm-mobile-android-arm64-debug
+          path: mobile/build/rhm_mobile/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14

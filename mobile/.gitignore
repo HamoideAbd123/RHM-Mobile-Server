@@ -1,0 +1,20 @@
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+coverage/
+android/.gradle/
+android/local.properties
+android/app/.cxx/
+
+# Local signing material and generated Android packages
+android/app/*.jks
+android/app/*.keystore
+android/key.properties
+*.jks
+*.keystore
+*.apk
+*.aab
+.env
+.env.*
