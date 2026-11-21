@@ -20,6 +20,20 @@ The Flutter client is an interface to the existing RHM FastAPI backend. The Andr
 
 See [Architecture](docs/ARCHITECTURE.md), [Roadmap](docs/ROADMAP.md), and [Status](docs/STATUS.md).
 
+## Flutter client structure
+
+The Flutter client is organized by responsibility rather than concentrated in the application entry file:
+
+- `mobile/lib/main.dart` is the startup/bootstrap entry point.
+- `app/rhm_app.dart` owns the application shell and global theme selection.
+- `features/chat/` contains the chat screen and separates its behavior into storage, connection, conversation, update, voice and navigation modules.
+- `conversation/` contains reusable message, composer and suggestion widgets.
+- `api_client.dart` is the authenticated loopback HTTP facade; endpoint operations are grouped by domain under `api_client/`.
+- `api_models.dart` is the shared DTO model surface.
+- `workspace/` contains the individual project, task, memory, agent, audit, device and voice-diagnostics screens. `workspace_screens.dart` remains a compatibility export.
+
+See [Flutter client architecture](docs/FLUTTER_CLIENT_ARCHITECTURE.md) and the [refactor report](docs/REFACTOR_REPORT.md).
+
 ## Flutter version and local checks
 
 The current `mobile/pubspec.yaml` declares package version `0.1.10+11`, Dart 3.13 or newer, and Flutter 3.47 or newer.
