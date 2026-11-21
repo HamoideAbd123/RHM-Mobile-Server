@@ -2,8 +2,8 @@ part of '../api_client.dart';
 
 extension RhmMcpApi on RhmApiClient {
   Future<List<RhmMcpServer>> listMcpServers() async {
-    final response = await this._send(
-      http.Request('GET', this._endpoint('mcp-client/servers')),
+    final response = await _send(
+      http.Request('GET', _endpoint('mcp-client/servers')),
     );
     if (response.statusCode != 200) {
       // Error bodies are untrusted: never surface arbitrary backend text or secrets.
@@ -11,7 +11,7 @@ extension RhmMcpApi on RhmApiClient {
         'تعذر تحميل خوادم MCP (HTTP ${response.statusCode}).',
       );
     }
-    final data = this._decode(response);
+    final data = _decode(response);
     if (data is! Map<String, dynamic> || data['servers'] is! List) {
       throw const RhmApiException('استجابة قائمة خوادم MCP غير صالحة.');
     }
@@ -33,14 +33,14 @@ extension RhmMcpApi on RhmApiClient {
     if (!validId) {
       throw const RhmApiException('معرّف خادم MCP غير صالح.');
     }
-    final response = await this._send(
+    final response = await _send(
       http.Request(
         'GET',
-        this._endpoint('mcp-client/servers/${Uri.encodeComponent(serverId)}/tools'),
+        _endpoint('mcp-client/servers/${Uri.encodeComponent(serverId)}/tools'),
       ),
       timeout: const Duration(seconds: 40),
     );
-    final data = this._decode(response);
+    final data = _decode(response);
     if (response.statusCode != 200) {
       final detail = data is Map<String, dynamic> ? data['detail'] : null;
       throw RhmApiException(
@@ -60,17 +60,17 @@ extension RhmMcpApi on RhmApiClient {
   ) async {
     final request = http.Request(
       'POST',
-      this._endpoint(
+      _endpoint(
         'mcp-client/servers/${Uri.encodeComponent(serverId)}/tools/${Uri.encodeComponent(toolName)}',
       ),
     )
       ..headers['content-type'] = 'application/json'
       ..body = jsonEncode({'arguments': arguments});
-    final response = await this._send(
+    final response = await _send(
       request,
       timeout: const Duration(seconds: 25),
     );
-    final data = this._decode(response);
+    final data = _decode(response);
     if (response.statusCode != 200 || data is! Map<String, dynamic>) {
       final detail = data is Map<String, dynamic> ? data['detail'] : null;
       throw RhmApiException(
