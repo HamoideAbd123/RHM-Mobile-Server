@@ -38,6 +38,8 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
   static const _pendingExpiryKey = 'rhm_pairing_pending_expiry';
   static const _pendingPrivateKey = 'rhm_pairing_pending_private_seed';
   static const _pendingPublicKey = 'rhm_pairing_pending_public_key';
+  static const _devicePrivateKey = 'rhm_device_private_key_seed';
+  static const _devicePublicKey = 'rhm_device_public_key';
 
   static const _storage = FlutterSecureStorage(
     aOptions: AndroidOptions(
@@ -117,11 +119,23 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
       }
 
       await _clearPending();
-      final keyPair = await _algorithm.newKeyPair();
-      final keyData = await keyPair.extract();
-      final publicKeyData = await keyPair.extractPublicKey();
-      final privateSeed = _encodeUrlSafe(keyData.bytes);
-      final publicKey = _encodeUrlSafe(publicKeyData.bytes);
+      final existingPrivateSeed = await _storage.read(key: _devicePrivateKey);
+      final existingPublicKey = await _storage.read(key: _devicePublicKey);
+      late final KeyPair keyPair;
+      late final String privateSeed;
+      late final String publicKey;
+      if (existingPrivateSeed != null && existingPublicKey != null) {
+        final seed = base64Url.decode(base64Url.normalize(existingPrivateSeed));
+        keyPair = await _algorithm.newKeyPairFromSeed(seed);
+        privateSeed = existingPrivateSeed;
+        publicKey = existingPublicKey;
+      } else {
+        keyPair = await _algorithm.newKeyPair();
+        final keyData = await keyPair.extract();
+        final publicKeyData = await keyPair.extractPublicKey();
+        privateSeed = _encodeUrlSafe(keyData.bytes);
+        publicKey = _encodeUrlSafe(publicKeyData.bytes);
+      }
       final request = await _api!.createDevicePairingRequest(
         name: 'RHM Android phone',
         publicKey: publicKey,
