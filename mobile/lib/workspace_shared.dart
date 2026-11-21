@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'api_client.dart';
+
 String workspaceErrorText(Object error) =>
     error is RhmApiException ? error.message : 'تعذر إكمال العملية.';
 
