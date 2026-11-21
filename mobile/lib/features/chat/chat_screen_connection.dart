@@ -48,6 +48,7 @@ extension _ChatScreenConnection on _ChatScreenState {
       token: effectiveToken,
       refreshToken: deviceRefreshToken,
       onCredentialsRotated: _persistDeviceCredentials,
+      onCredentialsInvalidated: _clearDeviceSessionCredentials,
     );
     if (!mounted) {
       api.close();
@@ -334,6 +335,15 @@ extension _ChatScreenConnection on _ChatScreenState {
     }
   }
 
+
+  Future<void> _clearDeviceSessionCredentials() async {
+    await _ChatScreenState._storage.delete(
+      key: _ChatScreenState._deviceAccessTokenKey,
+    );
+    await _ChatScreenState._storage.delete(
+      key: _ChatScreenState._deviceRefreshTokenKey,
+    );
+  }
 
   Future<void> _persistDeviceCredentials(
     String accessToken,
