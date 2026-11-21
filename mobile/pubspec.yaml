@@ -16,6 +16,8 @@ dependencies:
   # 0.10.6+ fixes AGP 9 / Flutter built-in Kotlin compatibility.
   workmanager: ^0.10.6
   crypto: ^3.0.6
+  cryptography: ^2.7.0
+  qr_flutter: ^4.1.0
   open_filex: ^5.0.0
   package_info_plus: ^8.3.1
   path_provider: ^2.1.5
