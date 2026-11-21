@@ -24,17 +24,20 @@ class RhmApiClient {
     String? refreshToken,
     Future<void> Function(String accessToken, String refreshToken)?
         onCredentialsRotated,
+    Future<void> Function()? onCredentialsInvalidated,
     http.Client? httpClient,
   })  : _serverUri = _validateServerUrl(serverUrl),
         _token = _validateToken(token),
         _refreshToken = _validateToken(refreshToken),
         _onCredentialsRotated = onCredentialsRotated,
+        _onCredentialsInvalidated = onCredentialsInvalidated,
         _http = httpClient ?? http.Client();
 
   final Uri _serverUri;
   final http.Client _http;
   final Future<void> Function(String accessToken, String refreshToken)?
       _onCredentialsRotated;
+  final Future<void> Function()? _onCredentialsInvalidated;
   String? _token;
   String? _refreshToken;
   Future<void>? _refreshInFlight;
@@ -144,6 +147,7 @@ class RhmApiClient {
     if (response.statusCode != 200) {
       _token = null;
       _refreshToken = null;
+      await _onCredentialsInvalidated?.call();
       throw const RhmApiException(
         'تعذر تجديد اعتماد هذا الجهاز. أعد ربط الهاتف بخادم RHM.',
       );
