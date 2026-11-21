@@ -7,9 +7,12 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'api_client.dart';
+import 'update_service.dart';
 
 const _backgroundTaskName = 'rhmServerNotificationPoll';
 const _backgroundTaskUniqueName = 'rhm-server-notification-poll';
+const _appUpdateTaskName = 'rhmAppReleaseUpdateCheck';
+const _appUpdateTaskUniqueName = 'rhm-app-release-update-check';
 
 int? parseRhmClockMinutes(Object? value) {
   if (value is! String || !RegExp(r'^\d{2}:\d{2}$').hasMatch(value)) {
@@ -40,10 +43,26 @@ bool isRhmQuietHoursActive(Object? value, {required DateTime now}) {
 @pragma('vm:entry-point')
 void rhmServerUpdateCallbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
-    if (task != _backgroundTaskName) return true;
+    if (task != _backgroundTaskName && task != _appUpdateTaskName) return true;
     try {
       WidgetsFlutterBinding.ensureInitialized();
       DartPluginRegistrant.ensureInitialized();
+
+      // App release discovery is deliberately independent of the local RHM
+      // backend URL and bearer token. It must still work when the server is off.
+      if (task == _appUpdateTaskName) {
+        final updater = RhmUpdateService();
+        try {
+          final update = await updater.checkForUpdate();
+          if (update != null) {
+            await RhmAppUpdateNotifications.instance.notifyIfNew(update);
+          }
+        } finally {
+          updater.close();
+        }
+        return true;
+      }
+
       const storage = FlutterSecureStorage(
         aOptions: AndroidOptions(
           resetOnError: false,
@@ -80,6 +99,14 @@ Future<void> initializeRhmBackgroundNotifications() async {
     frequency: const Duration(minutes: 15),
     existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
   );
+  await Workmanager().registerPeriodicTask(
+    _appUpdateTaskUniqueName,
+    _appUpdateTaskName,
+    frequency: const Duration(hours: 12),
+    constraints: Constraints(networkType: NetworkType.connected),
+    existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+  );
+  await RhmAppUpdateNotifications.instance.initialize(requestPermission: true);
 }
 
 class RhmServerUpdateNotifications {
