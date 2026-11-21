@@ -488,10 +488,12 @@ class RhmUpdateService {
     _cancelRequested = true;
     final subscription = _activeDownloadSubscription;
     final completer = _activeDownloadCompleter;
-    if (subscription != null) await subscription.cancel();
     if (completer != null && !completer.isCompleted) {
+      // Complete the awaited download future before cancel triggers onDone;
+      // otherwise a cancelled stream could be mistaken for a successful EOF.
       completer.completeError(const RhmUpdateCancelledException());
     }
+    if (subscription != null) await subscription.cancel();
   }
 
   Future<void> downloadAndInstall(
