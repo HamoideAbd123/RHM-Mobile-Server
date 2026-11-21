@@ -452,7 +452,7 @@ class RhmUpdateService {
           return;
         }
         if (received + chunk.length > totalBytes) {
-          unawaited(subscription.cancel());
+          unawaited(subscription?.cancel());
           if (!completer.isCompleted) {
             completer.completeError(
               const RhmUpdateException('تجاوز تنزيل APK الحجم المعلن.'),
