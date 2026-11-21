@@ -126,9 +126,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   Timer? _composerDraftTimer;
   DateTime? _lastUpdateCheckAt;
 
-  void _this._setState(VoidCallback callback) {
+  void _setState(VoidCallback callback) {
     if (!mounted) return;
-    this._setState(callback);
+    setState(callback);
   }
 
   @override

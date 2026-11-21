@@ -14,7 +14,7 @@ extension _ChatScreenUpdates on _ChatScreenState {
       }
       return;
     }
-    this._setState(() => _checkingUpdate = true);
+    _setState(() => _checkingUpdate = true);
     final updater = RhmUpdateService();
     try {
       final update = await updater.checkForUpdate(api);
@@ -109,7 +109,7 @@ extension _ChatScreenUpdates on _ChatScreenState {
         );
       }
     } finally {
-      if (mounted) this._setState(() => _checkingUpdate = false);
+      if (mounted) _setState(() => _checkingUpdate = false);
     }
   }
 
@@ -128,7 +128,7 @@ extension _ChatScreenUpdates on _ChatScreenState {
           ? preferences['channels'] as Map<String, dynamic>
           : const <String, dynamic>{};
       if (!mounted) return;
-      this._setState(() {
+      _setState(() {
         _unreadNotifications = channels['in_app'] == true &&
                 feed['unread_count'] is int
             ? feed['unread_count'] as int
