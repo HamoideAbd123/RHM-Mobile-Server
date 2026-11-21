@@ -8,25 +8,19 @@
 
 ## Current CI verification
 
-GitHub Actions completed successfully on the reconciled app-import PR head `43405a7fe1357bfc48edffcd124ea39c8745915b`:
+The merged `main` commit `927dc2d8708ba951fad90bf845ed871060680ab3` passed GitHub Actions run [#44954608077](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44954608077), completed 2026-11-21 22:08:50 UTC:
 
-- Pull-request run [#44954297365](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44954297365): **success**.
-- Push run [#44954292974](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44954292974): **success**.
 - Flutter unit/widget tests: **passed**.
 - Flutter static analysis: **passed**.
 - Generated Android host preparation and dependency resolution: **passed**.
 - Android ARM64 debug APK build: **passed**.
 - Debug package identity verification: **passed** (`com.rhm.rhm_mobile.debug`).
-- Manifest assertions for `REQUEST_INSTALL_PACKAGES` and `POST_NOTIFICATIONS`: **passed**.
-- Artifact upload: **passed**.
+- Manifest permission assertions: **passed**.
+- Test APK artifact upload: **passed**.
 
-Artifacts:
-- Run #44954297365: `rhm-mobile-android-arm64-debug`, ID `14726609442`, 63,426,877 bytes, archive SHA-256 `7930358058f11d03dcf7c4549bf575ff730ac77dc47fa845c1e160d22e3fb949`, expires 2026-12-05 22:04 UTC.
-- Run #44954292974: `rhm-mobile-android-arm64-debug`, ID `14727202176`, 63,426,878 bytes, archive SHA-256 `fa57cd3d6d42a2b87a04ea66bf4a54d95eea701d0ec7406aedb7a3425352d8df`, expires 2026-12-05 22:04 UTC.
+Earlier reconciled PR-head runs #44954297365 and #44954292974 also passed the same pipeline. Their artifacts are debug-only and expire after 14 days.
 
-Both are **debug/test APKs**, not production updates. Their package ID is `com.rhm.rhm_mobile.debug`; they cannot update the production package `com.rhm.rhm_mobile`.
-
-The post-merge push workflow [#44954608077](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44954608077) was also started on `main`; its ARM64 build was still running when this report was last checked. The reconciled PR-head runs above already passed the full pipeline.
+The post-merge run confirms the final merged code builds. It does not prove a production-signed APK or an in-place upgrade of the currently installed app.
 
 ## Independent Android app updater — 2026-11-21
 
@@ -60,12 +54,14 @@ Detailed references:
 - This Flutter refactor did not change backend routes, API payloads, database schemas, migrations, provider routing, web UI or private signing material.
 - No provider key, API token file, private environment file, database dump or signing key was copied into this public repository.
 
-## GitHub review boundary
+## GitHub review and main CI
 
-- PR #2 remains open and unmerged: https://github.com/HamoideAbd123/RHM-Mobile-Server/pull/2
-- The updater implementation is on `bootstrap/update-manager-independent-2026-11-21`, derived from `bootstrap/import-flutter-client-2026-11-20`.
-- No merge to `main` has been performed yet; PR #2 still requires branch reconciliation and a final green CI run.
-- PR #2 has existing base-branch divergence and remains an explicit review/merge decision for the owner.
+- App-import PR #2 was merged on 2026-11-21 at 22:02:08 UTC: https://github.com/HamoideAbd123/RHM-Mobile-Server/pull/2
+- Merge commit: `927dc2d8708ba951fad90bf845ed871060680ab3`.
+- GitHub Actions on the merged `main` commit completed successfully: [run #44954608077](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44954608077).
+- Passed on that run: Flutter unit/widget tests, static analysis, ARM64 debug APK build, debug package identity verification, Android permission assertions and artifact upload.
+- The current `main` documentation commit is `c4a4da30e049844dfff04d377b0721a3182cf214`.
+- Core cleanup PR #47 removed the duplicate Flutter source. A fresh check confirmed `mobile/pubspec.yaml` is absent from Core `main`; the canonical Flutter source is this repository.
 
 ## Remaining acceptance gates
 
@@ -80,8 +76,9 @@ Detailed references:
 
 ## Signing and release policy
 
-- Existing signing secrets remain only in the private RHM core repository.
-- Do not create or upload a new signing key for this public repository.
-- The Core cleanup PR #47 removed `.github/workflows/mobile-server-signed-build.yml` along with the duplicated Flutter source. That signing workflow must be restored or replaced in Core; it should check out this public repository at a reviewed ref and use the existing private keystore secrets without copying app source back into Core.
-- The previous private signing workflow uploaded an Actions artifact only; it did not publish a GitHub Release in this mobile repository. A release publisher therefore needs an authorized cross-repository release credential, or the signed APK and checksum must be uploaded manually to a GitHub Release.
-- A production release requires the existing signing identity, production package ID `com.rhm.rhm_mobile`, a mandatory signer-fingerprint comparison and a tested data-preserving upgrade.
+- Production signing secrets must remain only in the private Core repository.
+- The private signing workflow proposal PR #45 was merged into Core on 2026-11-20, but a subsequent Core cleanup removed the workflow file. A current inspection of Core `main` found no signing workflow, so a protected signing workflow still needs to be restored/replaced there.
+- The public mobile CI currently builds only a debug APK with application ID `com.rhm.rhm_mobile.debug`.
+- The imported app declares release version `0.1.10+11` and intended production application ID `com.rhm.rhm_mobile`; neither the production signer fingerprint nor compatibility with the APK installed on the Huawei phone has yet been verified.
+- No stable GitHub Release exists in this mobile repository. The updater correctly reports that no stable release has been published.
+- Do not create a release tag or publish the debug APK as a phone update. A production release requires the original signing identity, verified certificate fingerprint, signed ARM64 APK, SHA-256 sidecar and a successful update-in-place/data-preservation test.
