@@ -1,6 +1,6 @@
 # RHM Mobile Server architecture
 
-**Document status:** accepted direction; native-runtime implementation is not yet complete.
+**Document status:** accepted system direction. The Flutter client refactor is implemented and CI-verified on the current work branch; native runtime behavior still requires physical-device acceptance.
 
 ## 1. System boundary
 
@@ -8,8 +8,8 @@ The repository separates the mobile client from the existing RHM application ser
 
 | Layer | Responsibility | Current state |
 |---|---|---|
-| Flutter client | Chat UI, conversations, projects, tasks, memory, agent, audit, devices, voice UI and settings | Imported from the private core repository |
-| Kotlin Android host | Foreground monitor, notification, opt-in boot attempt and Flutter method channel | Initial monitor implemented; Python/Termux process manager is not implemented |
+| Flutter client | Chat UI, conversations, projects, tasks, memory, agent, audit, devices, voice UI and settings | Imported and modularized; Flutter tests, analysis and ARM64 debug CI pass on the current work branch |
+| Kotlin Android host | Foreground monitor, notification, opt-in boot request, Flutter method channel, authenticated health and fixed Termux bridge | Implemented in the branch; Huawei/EMUI device acceptance remains open |
 | Python runtime | Existing RHM business logic, FastAPI routes, provider routing, agents and MCP gateway | Remains in the private core repository |
 | Uvicorn | ASGI HTTP server for the existing FastAPI application | Existing server; not replaced |
 | Database | Persistent RHM records and migrations | Remains with the existing backend during transition |
@@ -92,29 +92,42 @@ On an unexpected runtime exit, use bounded restart attempts with exponential bac
 The first implementation should prefer correctness and recoverability over aggressive polling or keeping unnecessary wake locks. Battery and memory behavior must be measured on the actual phone.
 
 
-## 8. Implemented monitor boundary
+## 8. Implemented Android runtime-host boundary
 
-The first native milestone adds:
-- `RhmRuntimeService`: a visible foreground service with a persistent low-importance notification and explicit stop action.
-- `RhmBootReceiver`: requests the monitor after `BOOT_COMPLETED` only when the user enabled the preference; notification permission is checked on Android 13+.
-- `RhmAndroidRuntimeBridge`: typed Flutter method-channel calls for status, start, stop, autostart preference and opening notification settings.
-- A 15-second TCP connect probe to `127.0.0.1:8000`.
+The Android runtime-host code in the mobile branch is an integration layer around the existing private RHM runtime. It is not an embedded Python distribution and does not replace FastAPI or Uvicorn.
 
-The probe is deliberately described as **TCP port reachable**, not application health. It does not send the bearer token, does not query `/mobile/health`, and does not assert that the database or model provider works.
+Implemented integration components include:
 
-The monitor does not spawn Python, Uvicorn, Debian or Termux. There is no shell execution endpoint and no Termux permission is requested. Termux integration remains a separate opt-in security design.
+- Kotlin foreground `RhmRuntimeService` with a user-visible notification and explicit service actions.
+- Opt-in boot receiver that reads the persisted owner preference and requests monitor/service startup where Android permits it.
+- Typed Flutter method-channel operations for status, start, stop, restart, autostart and diagnostics.
+- Fixed Termux RUN_COMMAND allow-list (`start`, `stop`, `restart`, `status`); the bridge does not expose arbitrary shell execution.
+- Authenticated FastAPI `GET /mobile/health` monitoring with a token protected by Android Keystore AES-GCM.
+- Distinct healthy, unavailable, unauthorized, missing-token and invalid-response states. Missing/invalid credentials do not trigger restart loops.
+- Bounded recovery/backoff for repeated health failures; the existing private `rhm.cli server-update supervise` command remains responsible for starting the FastAPI/Uvicorn and Next.js runtime.
+- Termux PID checks verify process start time and expected command identity before status/stop actions.
+
+**Acceptance status:** source and CI checks are not a substitute for a real Huawei Android 10 test. Boot delivery, foreground-service policy, Termux permission, screen-off, battery restrictions, process recovery and PostgreSQL/data preservation remain physical-device gates.
 
 ## 9. Debug and release application identity
 
-- Intended release application ID: `com.rhm.rhm_mobile`, matching the existing private workflow's Flutter org/project-name values. Verify this against the installed APK.
-- Debug CI application ID: `com.rhm.rhm_mobile.debug`, configured through the Gradle `debug` build type's `applicationIdSuffix`.
-- Debug APK uses debug signing and is not an in-place update for the installed release.
+- Intended production application ID: `com.rhm.rhm_mobile`.
+- CI debug application ID: `com.rhm.rhm_mobile.debug`.
+- CI verifies the debug application ID before uploading the ARM64 artifact.
+- Debug APK uses debug signing and is not an in-place update for the installed production release.
+- Production updates require the existing protected signing key, matching signer fingerprint and an explicit data-preservation test. No new signing key is generated in this repository.
 
 ## 10. Special-use foreground service decision gate
 
-The monitor currently declares `specialUse` and the `FOREGROUND_SERVICE_SPECIAL_USE` permission, together with a manifest subtype explanation. This is a candidate classification for user-started local-server monitoring when no standard service category fits; it is not a blanket approval. Before a production release, validate the actual workload and Google Play policy (if distributed through Play), and revisit this if the workload changes to sync, media, camera, microphone or another category.
+The runtime service currently declares `specialUse` and the `FOREGROUND_SERVICE_SPECIAL_USE` permission, together with a manifest subtype explanation. This is a candidate classification for user-started local-server monitoring when no standard service category fits; it is not a blanket approval. Before a production release, validate the actual workload and Google Play policy (if distributed through Play), and revisit this if the workload changes to sync, media, camera, microphone or another category.
 
 Official guidance:
 - [Foreground-service types and special use](https://developer.android.com/develop/background-work/services/fgs/service-types)
 - [Foreground-service launch requirements](https://developer.android.com/develop/background-work/services/fgs/launch)
 - [Android 15 background-start changes](https://developer.android.com/about/versions/15/behavior-changes-15)
+
+## 11. Flutter client internal architecture
+
+The Flutter client source organization, dependency boundaries, state ownership and compatibility exports are documented in [Flutter client architecture](FLUTTER_CLIENT_ARCHITECTURE.md). The detailed work log and verification record are in [Refactor report](REFACTOR_REPORT.md).
+
+The client remains a Flutter application with the existing API surface. No state-management framework or additional runtime package was introduced for this refactor. The chat screen's lifecycle and state owner remain in one Dart library; feature-specific extension parts keep implementation modules smaller without moving controllers, pending-turn state, voice objects or lifecycle observers across ownership boundaries.
