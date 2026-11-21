@@ -9,6 +9,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../api_client.dart';
+import '../../device_pairing_dialog.dart';
 import '../../app_version_footer.dart';
 import '../../conversation/chat_composer.dart';
 import '../../conversation/chat_message_bubble.dart';
