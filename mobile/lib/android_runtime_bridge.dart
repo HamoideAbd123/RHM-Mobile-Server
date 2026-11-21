@@ -119,6 +119,18 @@ class RhmAndroidRuntimeBridge {
     }
   }
 
+  Future<void> clearHealthToken() async {
+    if (!Platform.isAndroid) return;
+    try {
+      await _channel.invokeMethod<void>('clearHealthToken');
+    } on PlatformException catch (error) {
+      throw RhmAndroidRuntimeException(
+        error.code,
+        error.message ?? 'تعذر مسح رمز فحص الصحة القديم من Android Keystore.',
+      );
+    }
+  }
+
   Future<void> setHealthCredentials(
     String accessToken,
     String refreshToken,
