@@ -241,6 +241,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   static const _updateCheckInterval = Duration(hours: 6);
   Timer? _updateTimer;
   Timer? _serverNotificationTimer;
+  Timer? _composerDraftTimer;
   DateTime? _lastUpdateCheckAt;
 
   @override
@@ -333,9 +334,40 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _clearComposerDraft() async {
+    _composerDraftTimer?.cancel();
+    _composerDraftTimer = null;
     await _storage.delete(key: _composerDraftKey);
     await _storage.delete(key: _composerDraftProjectKey);
     _composerDraftProjectName = null;
+  }
+
+  void _scheduleComposerDraftSave(String text) {
+    _composerDraftTimer?.cancel();
+    _composerDraftTimer = Timer(const Duration(milliseconds: 500), () {
+      _composerDraftTimer = null;
+      unawaited(_persistComposerDraft(text));
+    });
+  }
+
+  Future<void> _persistComposerDraft(String text) async {
+    try {
+      if (text.trim().isEmpty) {
+        await _clearComposerDraft();
+      } else {
+        await _saveComposerDraft(text);
+      }
+    } catch (error) {
+      debugPrint('RHM composer draft could not be saved: $error');
+      if (mounted) {
+        setState(() => _error = 'تعذر حفظ مسودة الرسالة في التخزين الآمن.');
+      }
+    }
+  }
+
+  Future<void> _flushComposerDraft() async {
+    _composerDraftTimer?.cancel();
+    _composerDraftTimer = null;
+    await _persistComposerDraft(_prompt.text);
   }
 
   Future<void> _persistAppPreferences() async {
@@ -366,6 +398,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _updateTimer?.cancel();
     _serverNotificationTimer?.cancel();
+    _composerDraftTimer?.cancel();
+    _composerDraftTimer = null;
+    unawaited(_persistComposerDraft(_prompt.text));
     _api?.close();
     _prompt.dispose();
     _conversationSearch.dispose();
@@ -517,6 +552,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      unawaited(_flushComposerDraft());
+      return;
+    }
     if (state != AppLifecycleState.resumed) return;
     _pollServerUpdateNotifications();
     final lastCheck = _lastUpdateCheckAt;
@@ -1441,6 +1481,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       _prompt.text = value;
       _prompt.selection = TextSelection.collapsed(offset: value.length);
     });
+    _scheduleComposerDraftSave(value);
   }
 
   void _onSpeechResult(SpeechRecognitionResult result) {
@@ -1450,6 +1491,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       text: combined,
       selection: TextSelection.collapsed(offset: combined.length),
     );
+    _scheduleComposerDraftSave(combined);
     if (result.finalResult && mounted) {
       setState(() {
         _listening = false;
@@ -1482,6 +1524,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     try {
       // Persist the exact composer content before creating a conversation or
       // sending network requests, so an app/process restart cannot lose it.
+      _composerDraftTimer?.cancel();
+      _composerDraftTimer = null;
       await _saveComposerDraft(text);
       if (!mounted) return;
       _prompt.clear();
@@ -1564,7 +1608,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             ? 'استُعيد الرد السابق بأمان دون تكرار الرسالة.'
             : 'تم حفظ المحادثة والرد في سجل RHM.';
       });
-      await _clearComposerDraft();
+      if (_prompt.text.trim().isEmpty) {
+        await _clearComposerDraft();
+      } else {
+        await _persistComposerDraft(_prompt.text);
+      }
       await _clearPendingTurn();
       _projectScopeInitialized = true;
       await _refreshConversationList();
@@ -1574,10 +1622,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         setState(() {
           _error = error.message;
           _status = 'لم نتأكد من اكتمال الرسالة. أعد المحاولة؛ سيُستخدم معرّف الطلب نفسه.';
+          final draftToRestore = _prompt.text.trim().isEmpty ? text : _prompt.text;
           _prompt.value = TextEditingValue(
-            text: text,
-            selection: TextSelection.collapsed(offset: text.length),
+            text: draftToRestore,
+            selection: TextSelection.collapsed(offset: draftToRestore.length),
           );
+          _scheduleComposerDraftSave(draftToRestore);
         });
       }
     } catch (_) {
@@ -1585,10 +1635,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         setState(() {
           _error = 'تعذر إكمال المحادثة. تحقق من اتصال الخادم ثم أعد المحاولة.';
           _status = 'احتفظ RHM بمعرّف الطلب لإعادة المحاولة دون تكرار.';
+          final draftToRestore = _prompt.text.trim().isEmpty ? text : _prompt.text;
           _prompt.value = TextEditingValue(
-            text: text,
-            selection: TextSelection.collapsed(offset: text.length),
+            text: draftToRestore,
+            selection: TextSelection.collapsed(offset: draftToRestore.length),
           );
+          _scheduleComposerDraftSave(draftToRestore);
         });
       }
     } finally {
@@ -2322,13 +2374,18 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         ),
                         const SizedBox(width: 7),
                         Expanded(
-                          child: Text(
-                            _error ?? _status,
-                            style: TextStyle(
-                              color: _error == null
-                                  ? Theme.of(context).colorScheme.onSurfaceVariant
-                                  : Theme.of(context).colorScheme.error,
-                              fontSize: 12,
+                          child: Semantics(
+                            liveRegion: true,
+                            child: Text(
+                              _error ?? _status,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: _error == null
+                                    ? Theme.of(context).colorScheme.onSurfaceVariant
+                                    : Theme.of(context).colorScheme.error,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ),
@@ -2443,7 +2500,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       child: Align(
                         alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
                         child: ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * .82),
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.sizeOf(context).width >= RhmDesignTokens.tabletBreakpoint
+                                ? 760
+                                : MediaQuery.sizeOf(context).width * .82,
+                          ),
                           child: DecoratedBox(
                             decoration: BoxDecoration(
                               color: bubbleColor,
@@ -2657,7 +2718,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       ],
                       onChanged: (_projectScopeInitialized || _pendingRequestId != null)
                           ? null
-                          : (value) => setState(() => _selectedProjectName = value),
+                          : (value) {
+                              setState(() => _selectedProjectName = value);
+                              _scheduleComposerDraftSave(_prompt.text);
+                            },
                     ),
                     const SizedBox(height: 8),
                     Container(
@@ -2699,6 +2763,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               maxLines: 5,
                               maxLength: 48000,
                               textDirection: _directionFor(_prompt.text),
+                              onChanged: _scheduleComposerDraftSave,
                               decoration: const InputDecoration(
                                 hintText: 'اكتب رسالتك…',
                                 counterText: '',
