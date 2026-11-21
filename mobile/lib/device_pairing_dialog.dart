@@ -254,6 +254,26 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
     }
   }
 
+  Future<void> _resetRevokedIdentity() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+      _status = 'جارٍ إنشاء هوية جديدة لهذا الهاتف…';
+    });
+    for (final key in [
+      _devicePrivateKey,
+      _devicePublicKey,
+      'rhm_device_id',
+      'rhm_device_access_token',
+      'rhm_device_refresh_token',
+    ]) {
+      await _storage.delete(key: key);
+    }
+    await _clearPending();
+    if (!mounted) return;
+    await _beginPairing();
+  }
+
   @override
   Widget build(BuildContext context) {
     final code = _request?['pairing_code'] as String?;
@@ -321,6 +341,12 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
         ),
       ),
       actions: [
+        if (_error?.toLowerCase().contains('revoked') == true ||
+            _error?.toLowerCase().contains('no longer active') == true)
+          TextButton(
+            onPressed: _busy ? null : _resetRevokedIdentity,
+            child: const Text('إنشاء هوية جديدة'),
+          ),
         TextButton(
           onPressed: _busy ? null : () => Navigator.of(context).pop(false),
           child: const Text('إغلاق'),
