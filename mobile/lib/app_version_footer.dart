@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import '../rhm_theme.dart';
+import 'rhm_theme.dart';
 
 class RhmAppVersionFooter extends StatefulWidget {
   const RhmAppVersionFooter();
