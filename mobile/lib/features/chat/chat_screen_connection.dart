@@ -64,10 +64,7 @@ extension _ChatScreenConnection on _ChatScreenState {
     try {
       await api.checkConnection();
       if (deviceRefreshToken != null && api.accessToken != null) {
-        final currentRefresh = await _ChatScreenState._storage.read(
-          key: _ChatScreenState._deviceRefreshTokenKey,
-        ) ?? deviceRefreshToken;
-        await _syncAndroidHealthCredentials(api.accessToken!, currentRefresh);
+        await _clearAndroidHealthToken();
       } else if (token != null && token.isNotEmpty) {
         await _syncAndroidHealthToken(token);
       }
@@ -130,7 +127,7 @@ extension _ChatScreenConnection on _ChatScreenState {
       );
       final savedToken = await _ChatScreenState._storage.read(key: _ChatScreenState._tokenKey);
       if (deviceAccess != null && deviceRefresh != null) {
-        await _syncAndroidHealthCredentials(deviceAccess, deviceRefresh);
+        await _clearAndroidHealthToken();
       } else if (savedToken != null && savedToken.isNotEmpty) {
         await _syncAndroidHealthToken(savedToken);
       }
@@ -350,7 +347,8 @@ extension _ChatScreenConnection on _ChatScreenState {
       key: _ChatScreenState._deviceRefreshTokenKey,
       value: refreshToken,
     );
-    await _syncAndroidHealthCredentials(accessToken, refreshToken);
+    // Native runtime monitoring uses the public loopback /health liveness
+    // endpoint, so it never receives or shares this rotating refresh token.
   }
 
   Future<void> _savePairedDeviceCredentials({
@@ -405,10 +403,7 @@ extension _ChatScreenConnection on _ChatScreenState {
         });
       }
       previous?.close();
-      await _syncAndroidHealthCredentials(
-        candidate.accessToken ?? accessToken,
-        refreshToken,
-      );
+      await _clearAndroidHealthToken();
       await _loadProviders();
       await _loadProjects();
       await _restoreConversation();
