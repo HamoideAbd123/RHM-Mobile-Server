@@ -5,16 +5,16 @@ extension RhmNotificationsApi on RhmApiClient {
     int limit = 100,
     bool unreadOnly = false,
   }) async {
-    final response = await this._send(
+    final response = await _send(
       http.Request(
         'GET',
-        this._endpoint('notifications?limit=$limit&unread_only=$unreadOnly'),
+        _endpoint('notifications?limit=$limit&unread_only=$unreadOnly'),
       ),
     );
     if (response.statusCode != 200) {
       throw RhmApiException('تعذر تحميل إشعارات RHM (HTTP ${response.statusCode}).');
     }
-    final data = this._decode(response);
+    final data = _decode(response);
     if (data is! Map<String, dynamic> || data['items'] is! List) {
       throw const RhmApiException('استجابة إشعارات RHM غير صالحة.');
     }
@@ -22,13 +22,13 @@ extension RhmNotificationsApi on RhmApiClient {
   }
 
   Future<Map<String, dynamic>> getNotificationPreferences() async {
-    final response = await this._send(
-      http.Request('GET', this._endpoint('notifications/preferences')),
+    final response = await _send(
+      http.Request('GET', _endpoint('notifications/preferences')),
     );
     if (response.statusCode != 200) {
       throw RhmApiException('تعذر تحميل إعدادات الإشعارات (HTTP ${response.statusCode}).');
     }
-    final data = this._decode(response);
+    final data = _decode(response);
     if (data is! Map<String, dynamic>) {
       throw const RhmApiException('إعدادات الإشعارات غير صالحة.');
     }
@@ -38,11 +38,11 @@ extension RhmNotificationsApi on RhmApiClient {
   Future<Map<String, dynamic>> updateNotificationPreferences(
     Map<String, dynamic> changes,
   ) async {
-    final request = http.Request('POST', this._endpoint('notifications/preferences'))
+    final request = http.Request('POST', _endpoint('notifications/preferences'))
       ..headers['content-type'] = 'application/json'
       ..body = jsonEncode(changes);
-    final response = await this._send(request);
-    final data = this._decode(response);
+    final response = await _send(request);
+    final data = _decode(response);
     if (response.statusCode != 200 || data is! Map<String, dynamic>) {
       final detail = data is Map<String, dynamic> ? data['detail'] : null;
       throw RhmApiException(
@@ -56,13 +56,13 @@ extension RhmNotificationsApi on RhmApiClient {
     List<String> eventIds = const [],
     bool markAll = false,
   }) async {
-    final request = http.Request('POST', this._endpoint('notifications/read'))
+    final request = http.Request('POST', _endpoint('notifications/read'))
       ..headers['content-type'] = 'application/json'
       ..body = jsonEncode({
         'event_ids': eventIds,
         'mark_all': markAll,
       });
-    final response = await this._send(request);
+    final response = await _send(request);
     if (response.statusCode != 200) {
       throw RhmApiException('تعذر تحديث حالة الإشعارات (HTTP ${response.statusCode}).');
     }
