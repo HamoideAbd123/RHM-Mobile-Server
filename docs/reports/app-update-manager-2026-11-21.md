@@ -3,7 +3,8 @@
 **Date:** 2026-11-21  
 **Repository:** `HamoideAbd123/RHM-Mobile-Server`  
 **Implementation branch:** `bootstrap/update-manager-independent-2026-11-21`  
-**Verified code commit:** `a0294c5582d64d8b2ec318975266ff29e3775625`
+**Merged into:** `main` via PR #2  
+**Merge commit:** `927dc2d8708ba951fad90bf845ed871060680ab3`
 
 ## Objective
 
@@ -66,7 +67,7 @@ The artifact is a **debug APK** with package ID `com.rhm.rhm_mobile.debug`. It i
 
 ## Merge status
 
-The implementation is on the feature branch above and has not yet been merged into `main`. The app-import PR #2 is still open. Its source branch is being reconciled with the latest `main` head by a merge commit; CI must pass on that reconciled branch before PR #2 is merged.
+The updater implementation was merged into `main` through app-import PR #2 on 2026-11-21 at 22:02:08 UTC. Merge commit: `927dc2d8708ba951fad90bf845ed871060680ab3`. The push and pull-request CI checks on the reconciled PR head both passed: runs #44954292974 and #44954297365.
 
 
 ## Single-source ownership check

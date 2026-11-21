@@ -54,8 +54,9 @@ The updater is independent of Core server updates. `/server-update/*` continues 
 
 ## Source review and merge gates
 
-- [ ] Reconcile the existing import PR #2 with the current `main` head, re-run CI on the reconciled branch, and merge after all checks pass.
-- [ ] Keep the private core, production secrets, database and web UI outside this public mobile PR.
+- [x] Reconcile the app-import PR #2 with the latest `main` head and pass both push and PR CI.
+- [x] Merge PR #2 into `main` on 2026-11-21. Merge commit: `927dc2d8708ba951fad90bf845ed871060680ab3`.
+- [x] Keep the private core, production secrets, database and web UI outside this public mobile repository.
 
 ## Device acceptance: Huawei Android 10
 

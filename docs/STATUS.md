@@ -1,15 +1,17 @@
 # RHM Mobile Server — verified status
 
 **Status date:** 2026-11-21  
-**Work branch:** `bootstrap/update-manager-independent-2026-11-21`  
-**Verified code commit:** `a0294c5582d64d8b2ec318975266ff29e3775625`  
+**Work branch:** `main` (updater implementation merged)  
+**Merged app commit:** `927dc2d8708ba951fad90bf845ed871060680ab3`  
 **Private core:** `HamoideAbd123/rhm-personal-ai-core` (authoritative backend)  
 **Public mobile:** `HamoideAbd123/RHM-Mobile-Server` (Android/Flutter integration)
 
 ## Current CI verification
 
-GitHub Actions run [#44953230929](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44953230929) completed successfully on code commit `a0294c5582d64d8b2ec318975266ff29e3775625`.
+GitHub Actions completed successfully on the reconciled app-import PR head `43405a7fe1357bfc48edffcd124ea39c8745915b`:
 
+- Pull-request run [#44954297365](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44954297365): **success**.
+- Push run [#44954292974](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44954292974): **success**.
 - Flutter unit/widget tests: **passed**.
 - Flutter static analysis: **passed**.
 - Generated Android host preparation and dependency resolution: **passed**.
@@ -18,9 +20,13 @@ GitHub Actions run [#44953230929](https://github.com/HamoideAbd123/RHM-Mobile-Se
 - Manifest assertions for `REQUEST_INSTALL_PACKAGES` and `POST_NOTIFICATIONS`: **passed**.
 - Artifact upload: **passed**.
 
-Uploaded artifact: `rhm-mobile-android-arm64-debug`, ID `14726368838`, size **63,426,873 bytes** (about 60.5 MiB). Artifact archive SHA-256: `1d068588ecd0b9fb3a51f20bf2f8e4228442b72dc71dbf87c73cccdfb51c8de5`. It expires on **2026-12-05 21:52 UTC**.
+Artifacts:
+- Run #44954297365: `rhm-mobile-android-arm64-debug`, ID `14726609442`, 63,426,877 bytes, archive SHA-256 `7930358058f11d03dcf7c4549bf575ff730ac77dc47fa845c1e160d22e3fb949`, expires 2026-12-05 22:04 UTC.
+- Run #44954292974: `rhm-mobile-android-arm64-debug`, ID `14727202176`, 63,426,878 bytes, archive SHA-256 `fa57cd3d6d42a2b87a04ea66bf4a54d95eea701d0ec7406aedb7a3425352d8df`, expires 2026-12-05 22:04 UTC.
 
-This is a **debug/test APK**, not a production update. Its package ID is `com.rhm.rhm_mobile.debug`; it cannot update the production package `com.rhm.rhm_mobile`.
+Both are **debug/test APKs**, not production updates. Their package ID is `com.rhm.rhm_mobile.debug`; they cannot update the production package `com.rhm.rhm_mobile`.
+
+The post-merge push workflow [#44954608077](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44954608077) was also started on `main`; its ARM64 build was still running when this report was last checked. The reconciled PR-head runs above already passed the full pipeline.
 
 ## Independent Android app updater — 2026-11-21
 
