@@ -367,6 +367,9 @@ extension _ChatScreenConnection on _ChatScreenState {
     );
     try {
       await candidate.checkConnection();
+      final effectiveRefreshToken = await _ChatScreenState._storage.read(
+        key: _ChatScreenState._deviceRefreshTokenKey,
+      ) ?? refreshToken;
       await _ChatScreenState._storage.write(
         key: _ChatScreenState._serverKey,
         value: url,
@@ -377,7 +380,7 @@ extension _ChatScreenConnection on _ChatScreenState {
       );
       await _ChatScreenState._storage.write(
         key: _ChatScreenState._deviceRefreshTokenKey,
-        value: refreshToken,
+        value: effectiveRefreshToken,
       );
       await _ChatScreenState._storage.write(
         key: _ChatScreenState._deviceIdKey,
