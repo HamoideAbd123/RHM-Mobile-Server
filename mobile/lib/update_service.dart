@@ -320,6 +320,7 @@ class RhmUpdateService {
     if (_closed) throw const RhmUpdateException('خدمة التحديث مغلقة.');
     _cancelRequested = false;
     final expectedDigest = await _fetchExpectedChecksum(update);
+    if (_cancelRequested) throw const RhmUpdateCancelledException();
     final directory = _downloadDirectory ?? await getTemporaryDirectory();
     if (!await directory.exists()) {
       await directory.create(recursive: true);
@@ -360,6 +361,10 @@ class RhmUpdateService {
         throw const RhmUpdateException('تم رفض وجهة تنزيل APK غير موثوقة.');
       }
 
+      if (_cancelRequested) {
+        await response.stream.drain<void>();
+        throw const RhmUpdateCancelledException();
+      }
       var append = false;
       if (response.statusCode == 206) {
         final contentRange = response.headers['content-range'];
@@ -431,9 +436,10 @@ class RhmUpdateService {
     required int totalBytes,
     RhmUpdateProgressCallback? onProgress,
   }) async {
+    if (_cancelRequested) throw const RhmUpdateCancelledException();
     final sink = partial.openWrite(mode: append ? FileMode.append : FileMode.write);
     final completer = Completer<void>();
-    late final StreamSubscription<List<int>> subscription;
+    StreamSubscription<List<int>>? subscription;
     var received = initialBytes;
     _activeDownloadSink = sink;
     _activeDownloadCompleter = completer;
@@ -441,7 +447,7 @@ class RhmUpdateService {
     subscription = response.stream.listen(
       (chunk) {
         if (_cancelRequested) {
-          unawaited(subscription.cancel());
+          unawaited(subscription?.cancel());
           if (!completer.isCompleted) {
             completer.completeError(const RhmUpdateCancelledException());
           }
@@ -474,7 +480,7 @@ class RhmUpdateService {
       await completer.future;
       await sink.flush();
     } finally {
-      await subscription.cancel();
+      await subscription?.cancel();
       await sink.close();
       _activeDownloadSubscription = null;
       _activeDownloadSink = null;
@@ -487,17 +493,9 @@ class RhmUpdateService {
     final subscription = _activeDownloadSubscription;
     final completer = _activeDownloadCompleter;
     if (subscription != null) await subscription.cancel();
-    final sink = _activeDownloadSink;
-    if (sink != null) {
-      await sink.flush();
-      await sink.close();
-    }
     if (completer != null && !completer.isCompleted) {
       completer.completeError(const RhmUpdateCancelledException());
     }
-    _activeDownloadSubscription = null;
-    _activeDownloadSink = null;
-    _activeDownloadCompleter = null;
   }
 
   Future<void> downloadAndInstall(
