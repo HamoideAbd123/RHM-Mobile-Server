@@ -131,3 +131,16 @@ Official guidance:
 The Flutter client source organization, dependency boundaries, state ownership and compatibility exports are documented in [Flutter client architecture](FLUTTER_CLIENT_ARCHITECTURE.md). The detailed work log and verification record are in [Refactor report](REFACTOR_REPORT.md).
 
 The client remains a Flutter application with the existing API surface. No state-management framework or additional runtime package was introduced for this refactor. The chat screen's lifecycle and state owner remain in one Dart library; feature-specific extension parts keep implementation modules smaller without moving controllers, pending-turn state, voice objects or lifecycle observers across ownership boundaries.
+
+## 12. Independent Android application updates
+
+The Flutter updater is a separate client-side subsystem. It is not part of the RHM FastAPI server-update manager and it does not use the authenticated loopback API client.
+
+- Release metadata is read from the fixed public GitHub Releases API for this repository.
+- The parser accepts only stable semantic-version tags and the exact APK and SHA-256 asset names from the matching release.
+- Download URLs must belong to the same repository and release tag. Redirected asset responses are restricted to HTTPS GitHub release asset hosts.
+- APK bytes are streamed to app temporary storage. An interrupted partial file can be resumed with an HTTP Range request; size, APK ZIP header and SHA-256 are checked before installation.
+- A foreground check is performed on app launch and periodically while active. WorkManager performs a best-effort 12-hour background check under a network-connected constraint and posts one notification per newly discovered version.
+- The Android package installer owns the final install step. Its package signature check remains the authenticity gate for in-place updates; SHA-256 is an integrity check, not a replacement for signing.
+
+The updater cannot install silently. Production release creation remains blocked until the established `com.rhm.rhm_mobile` application ID and original signing certificate are verified and the private signing workflow can publish signed APKs to this repository.
