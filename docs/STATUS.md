@@ -66,6 +66,12 @@ Detailed references:
 7. Produce a production-signed ARM64 APK through the protected private-core signing workflow, then compare signer fingerprint and production package identity before any in-place installation.
 8. Confirm existing conversations, memory, projects, settings, credentials and PostgreSQL rows remain intact after the signed update.
 
+## Independent app update manager — 2026-11-21
+
+Implementation is underway on `bootstrap/update-manager-independent-2026-11-21`. The client-side app updater now targets this repository's GitHub Releases directly, rather than the private Core FastAPI update proxy. The implementation includes strict release/asset allowlisting, streamed APK download, HTTP Range resume, SHA-256 and size verification, install handoff, foreground checks, and a WorkManager background check with local notification.
+
+The implementation branch still requires GitHub Actions Flutter tests, analysis and ARM64 debug build. This is not a production release: the repository does not contain the private signing identity, and the exact installed production APK signer has not been verified as part of this task. No application version bump, production APK, GitHub Release or release Tag has been created.
+
 ## Signing and release policy
 
 - Existing signing secrets remain only in the private RHM core repository.
