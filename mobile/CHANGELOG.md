@@ -1,6 +1,6 @@
 # RHM Mobile changelog
 
-## Unreleased — 2026-11-21
+## 0.1.11+12 — 2026-11-21
 
 ### Independent app update manager
 - Moved app release discovery off the authenticated RHM FastAPI update proxy and onto the fixed RHM-Mobile-Server GitHub Releases source.
@@ -9,6 +9,7 @@
 - Added a standalone update notification channel and a best-effort 12-hour WorkManager release check that does not require the local RHM server or bearer token.
 - Added an in-app update check on launch and six-hour foreground/resume checks, with a download progress dialog and Android installer handoff.
 - Added the Android `REQUEST_INSTALL_PACKAGES` manifest permission for sideloaded releases; Android still requires the user to approve installation.
+- Bumped the Android app version to `0.1.11+12` for the standalone updater release candidate.
 - Production release remains gated on the original signing certificate, installed package identity and data-preservation acceptance.
 
 
