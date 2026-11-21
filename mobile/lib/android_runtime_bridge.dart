@@ -119,6 +119,27 @@ class RhmAndroidRuntimeBridge {
     }
   }
 
+  Future<void> setHealthCredentials(
+    String accessToken,
+    String refreshToken,
+  ) async {
+    if (!Platform.isAndroid) return;
+    try {
+      await _channel.invokeMethod<void>(
+        'setHealthCredentials',
+        {
+          'accessToken': accessToken,
+          'refreshToken': refreshToken,
+        },
+      );
+    } on PlatformException catch (error) {
+      throw RhmAndroidRuntimeException(
+        error.code,
+        error.message ?? 'تعذر مزامنة اعتماد الجهاز إلى Android Keystore.',
+      );
+    }
+  }
+
   Future<void> startBackend() => _invokeBackendAction('startBackend');
   Future<void> stopBackend() => _invokeBackendAction('stopBackend');
   Future<void> restartBackend() => _invokeBackendAction('restartBackend');
