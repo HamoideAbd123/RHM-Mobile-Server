@@ -33,6 +33,25 @@ Architecture and delivery records:
 - [x] Expose recovery diagnostics in Flutter.
 - [x] Validate Linux process start-time and command identity before PID status/stop operations.
 
+## Independent Android app update manager — implementation branch in progress
+
+- [x] Move Android app release discovery away from the private Core FastAPI update proxy.
+- [x] Read stable release metadata directly from the fixed `HamoideAbd123/RHM-Mobile-Server` GitHub Releases endpoint without sending an RHM bearer token.
+- [x] Allowlist the exact release page, tag, APK asset and SHA-256 asset URLs.
+- [x] Replace in-memory APK buffering with streamed file download and byte-progress callbacks.
+- [x] Resume interrupted APK transfers using HTTP Range; restart safely when the server ignores Range.
+- [x] Enforce the APK/checksum size limits, validate the APK ZIP header and verify SHA-256 before installation.
+- [x] Add explicit download cancellation and a progress dialog; retain incomplete parts only for later resume.
+- [x] Hand the verified APK to Android's installer; Android remains responsible for signature continuity and user approval.
+- [x] Check releases on app launch and during foreground/resume intervals without requiring the local backend.
+- [x] Schedule a best-effort 12-hour WorkManager check with a network-connected constraint and a dedicated app-update notification.
+- [x] Declare `REQUEST_INSTALL_PACKAGES` and add a CI manifest-permission assertion for sideloaded updates.
+- [ ] Pass the new Flutter tests, static analysis and ARM64 debug CI run.
+- [ ] Complete on-device update tests on Huawei Android 10: Wi-Fi loss/resume, checksum rejection, installer approval, update-in-place and data preservation.
+- [ ] Enable signed production publication only after the original package ID and certificate fingerprint are verified. Never create a replacement keystore.
+
+The updater is independent of Core server updates. `/server-update/*` continues to manage the local Python/Next.js runtime only.
+
 ## Source review and merge gates
 
 - [ ] Review the full PR #2 diff and resolve the existing base-branch divergence.
