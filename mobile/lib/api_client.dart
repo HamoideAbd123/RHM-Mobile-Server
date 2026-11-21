@@ -68,6 +68,8 @@ class RhmApiClient {
     return value;
   }
 
+  String? get accessToken => _token;
+
   Uri _endpoint(String path) => _serverUri.resolve(path);
 
   Future<http.Response> _dispatch(
