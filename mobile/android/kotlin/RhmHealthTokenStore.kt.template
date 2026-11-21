@@ -4,6 +4,7 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import org.json.JSONObject
 import java.nio.charset.StandardCharsets
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -11,33 +12,70 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
+data class RhmHealthCredentials(
+    val accessToken: String,
+    val refreshToken: String?
+)
+
 object RhmHealthTokenStore {
     private const val PREFS = "rhm_android_health_credentials"
     private const val KEY_ALIAS = "rhm_fastapi_health_token_v1"
     private const val IV_KEY = "token_iv"
     private const val CIPHER_TEXT_KEY = "token_ciphertext"
+    private val TOKEN_PATTERN = Regex("^[A-Za-z0-9_-]{32,}$")
 
     fun save(context: Context, token: String) {
-        require(Regex("^[A-Za-z0-9_-]{32,}$").matches(token))
+        save(context, token, null)
+    }
+
+    fun save(context: Context, accessToken: String, refreshToken: String?) {
+        require(TOKEN_PATTERN.matches(accessToken))
+        require(refreshToken == null || TOKEN_PATTERN.matches(refreshToken))
+        val payload = JSONObject()
+            .put("access_token", accessToken)
+            .put("refresh_token", refreshToken)
+            .toString()
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey())
-        val encrypted = cipher.doFinal(token.toByteArray(StandardCharsets.UTF_8))
+        val encrypted = cipher.doFinal(payload.toByteArray(StandardCharsets.UTF_8))
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putString(IV_KEY, Base64.encodeToString(cipher.iv, Base64.NO_WRAP))
             .putString(CIPHER_TEXT_KEY, Base64.encodeToString(encrypted, Base64.NO_WRAP))
             .apply()
     }
 
-    fun read(context: Context): String? {
+    fun read(context: Context): String? = readCredentials(context)?.accessToken
+
+    fun readCredentials(context: Context): RhmHealthCredentials? {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val ivText = prefs.getString(IV_KEY, null) ?: return null
         val cipherText = prefs.getString(CIPHER_TEXT_KEY, null) ?: return null
         return try {
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.DECRYPT_MODE, getOrCreateKey(),
-                GCMParameterSpec(128, Base64.decode(ivText, Base64.NO_WRAP)))
-            val plain = cipher.doFinal(Base64.decode(cipherText, Base64.NO_WRAP))
-            String(plain, StandardCharsets.UTF_8).takeIf { Regex("^[A-Za-z0-9_-]{32,}$").matches(it) }
+            cipher.init(
+                Cipher.DECRYPT_MODE,
+                getOrCreateKey(),
+                GCMParameterSpec(128, Base64.decode(ivText, Base64.NO_WRAP))
+            )
+            val plain = String(
+                cipher.doFinal(Base64.decode(cipherText, Base64.NO_WRAP)),
+                StandardCharsets.UTF_8
+            )
+            val credentials = try {
+                val payload = JSONObject(plain)
+                RhmHealthCredentials(
+                    accessToken = payload.getString("access_token"),
+                    refreshToken = payload.optString("refresh_token")
+                        .takeIf { it.isNotBlank() && it != "null" }
+                )
+            } catch (_: Exception) {
+                // Backward compatibility with the previous encrypted raw-token format.
+                RhmHealthCredentials(plain, null)
+            }
+            credentials.takeIf {
+                TOKEN_PATTERN.matches(it.accessToken) &&
+                    (it.refreshToken == null || TOKEN_PATTERN.matches(it.refreshToken))
+            }
         } catch (_: Exception) {
             prefs.edit().remove(IV_KEY).remove(CIPHER_TEXT_KEY).apply()
             null
@@ -49,12 +87,16 @@ object RhmHealthTokenStore {
         val existing = keyStore.getKey(KEY_ALIAS, null) as? SecretKey
         if (existing != null) return existing
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
-        generator.init(KeyGenParameterSpec.Builder(
-            KEY_ALIAS, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-        ).setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-            .setRandomizedEncryptionRequired(true)
-            .build())
+        generator.init(
+            KeyGenParameterSpec.Builder(
+                KEY_ALIAS,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+            )
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setRandomizedEncryptionRequired(true)
+                .build()
+        )
         return generator.generateKey()
     }
 }
