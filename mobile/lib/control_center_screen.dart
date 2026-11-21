@@ -119,9 +119,12 @@ class _RhmControlCenterScreenState extends State<RhmControlCenterScreen> {
       _checkingAppUpdate = true;
       _error = null;
     });
+    final updater = RhmUpdateService();
     try {
       final info = await PackageInfo.fromPlatform();
-      final update = await RhmUpdateService().checkForUpdate(widget.api);
+      final update = await updater.checkForUpdate(
+        currentVersion: info.version,
+      );
       if (!mounted) return;
       setState(() {
         _appVersion = info.version;
@@ -134,11 +137,12 @@ class _RhmControlCenterScreenState extends State<RhmControlCenterScreen> {
       }
     } catch (error) {
       if (mounted) {
-        setState(() => _error = error is RhmApiException
+        setState(() => _error = error is RhmUpdateException
             ? error.message
             : 'تعذر فحص تحديثات تطبيق RHM.');
       }
     } finally {
+      updater.close();
       if (mounted) setState(() => _checkingAppUpdate = false);
     }
   }
@@ -170,15 +174,17 @@ class _RhmControlCenterScreenState extends State<RhmControlCenterScreen> {
       _installingAppUpdate = true;
       _error = null;
     });
+    final updater = RhmUpdateService();
     try {
-      await RhmUpdateService().downloadAndInstall(update, widget.api);
+      await updater.downloadAndInstall(update);
     } catch (error) {
       if (mounted) {
-        setState(() => _error = error is RhmApiException
+        setState(() => _error = error is RhmUpdateException
             ? error.message
             : 'تعذر تثبيت تحديث التطبيق.');
       }
     } finally {
+      updater.close();
       if (mounted) setState(() => _installingAppUpdate = false);
     }
   }
