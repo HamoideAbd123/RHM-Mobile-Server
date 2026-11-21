@@ -267,7 +267,7 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
               ),
               const SizedBox(height: 10),
               QrImageView(
-                data: 'RHM-PAIRING:v1:$code',
+                data: code,
                 size: 164,
                 backgroundColor: Colors.white,
               ),
