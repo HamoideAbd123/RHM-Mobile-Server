@@ -1,5 +1,29 @@
 # RHM Mobile changelog
 
+## Unreleased — 2026-11-21
+
+### Architecture and maintainability
+- Reduced `main.dart` to the application bootstrap and moved root app configuration to `app/rhm_app.dart`.
+- Split the chat screen implementation into focused storage, update, connection, conversations, voice and navigation modules while keeping one lifecycle/state owner.
+- Extracted reusable chat message, composer, suggestion and app-version widgets into dedicated modules.
+- Split authenticated API operations into provider/chat, server-updates, notifications, app-updates, MCP, conversations and workspace endpoint modules.
+- Added a dedicated API DTO model layer and retained `api_client.dart` as the stable client-facing facade/export surface.
+- Split workspace screens into per-feature modules and retained `workspace_screens.dart` as a compatibility export.
+- Added the [Flutter client architecture](../docs/FLUTTER_CLIENT_ARCHITECTURE.md) and [refactor report](../docs/REFACTOR_REPORT.md).
+
+### UI/UX and reliability
+- Added debounced secure composer draft autosave and flush-on-background behavior.
+- Preserved project context and a next draft while a previous chat turn is completing.
+- Kept status messages available to accessibility live regions and improved wide-screen chat bubble sizing.
+- Retained semantic theme tokens, light/dark/system preferences, adaptive navigation and Android touch-target rules.
+- Added focused tests for assistant/user message bubbles and composer callbacks.
+
+### Compatibility and scope
+- No API routes, request/response payloads, database schema, migrations, backend processes, web UI or provider-key handling were changed.
+- No additional state-management framework or runtime dependency was introduced.
+- CI run [#134](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44945841695) passed Flutter tests, static analysis, Android ARM64 debug build, debug package identity verification and APK upload.
+- The resulting artifact is debug-only; production signing and real-device acceptance remain separate gates.
+
 ## 0.1.7+8 — 2026-11-07
 
 - Added a dedicated connection-health action in the app bar.
