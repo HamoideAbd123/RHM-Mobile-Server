@@ -11,9 +11,13 @@ extension _ChatScreenConnection on _ChatScreenState {
   Future<void> _restoreConnection() async {
     String? savedUrl;
     String? token;
+    String? deviceAccessToken;
+    String? deviceRefreshToken;
     try {
       savedUrl = await _ChatScreenState._storage.read(key: _ChatScreenState._serverKey);
       token = await _ChatScreenState._storage.read(key: _ChatScreenState._tokenKey);
+      deviceAccessToken = await _ChatScreenState._storage.read(key: _ChatScreenState._deviceAccessTokenKey);
+      deviceRefreshToken = await _ChatScreenState._storage.read(key: _ChatScreenState._deviceRefreshTokenKey);
     } catch (_) {
       // Never erase credentials as a side effect of a read/decryption error.
       // Keep the user on the chat screen and surface a recoverable warning.
@@ -30,14 +34,21 @@ extension _ChatScreenConnection on _ChatScreenState {
         ? savedUrl!.trim()
         : RhmApiClient.defaultServerUrl;
     _serverUrl.text = url;
-    if (token == null || token.trim().isEmpty) {
+    final effectiveToken = deviceAccessToken ?? token;
+    if ((effectiveToken == null || effectiveToken.trim().isEmpty) &&
+        (deviceRefreshToken == null || deviceRefreshToken.isEmpty)) {
       _setState(() {
-        _status = 'عنوان الخادم محفوظ؛ أدخل رمز الوصول مرة واحدة لإكمال الاتصال.';
+        _status = 'عنوان الخادم محفوظ. يمكنك ربط هذا الهاتف بموافقة المالك دون إدخال الرمز الرئيسي.';
       });
       return;
     }
 
-    final api = RhmApiClient(serverUrl: url, token: token);
+    final api = RhmApiClient(
+      serverUrl: url,
+      token: effectiveToken,
+      refreshToken: deviceRefreshToken,
+      onCredentialsRotated: _persistDeviceCredentials,
+    );
     if (!mounted) {
       api.close();
       return;
@@ -52,7 +63,14 @@ extension _ChatScreenConnection on _ChatScreenState {
 
     try {
       await api.checkConnection();
-      await _syncAndroidHealthToken(token);
+      if (deviceRefreshToken != null && api.accessToken != null) {
+        final currentRefresh = await _ChatScreenState._storage.read(
+          key: _ChatScreenState._deviceRefreshTokenKey,
+        ) ?? deviceRefreshToken;
+        await _syncAndroidHealthCredentials(api.accessToken!, currentRefresh);
+      } else if (token != null && token.isNotEmpty) {
+        await _syncAndroidHealthToken(token);
+      }
       if (!mounted) return;
       _setState(() => _connectionReady = true);
       await RhmServerUpdateNotifications.instance.prime(api);
@@ -104,8 +122,16 @@ extension _ChatScreenConnection on _ChatScreenState {
     });
     try {
       await api.checkConnection();
+      final deviceAccess = await _ChatScreenState._storage.read(
+        key: _ChatScreenState._deviceAccessTokenKey,
+      );
+      final deviceRefresh = await _ChatScreenState._storage.read(
+        key: _ChatScreenState._deviceRefreshTokenKey,
+      );
       final savedToken = await _ChatScreenState._storage.read(key: _ChatScreenState._tokenKey);
-      if (savedToken != null && savedToken.isNotEmpty) {
+      if (deviceAccess != null && deviceRefresh != null) {
+        await _syncAndroidHealthCredentials(deviceAccess, deviceRefresh);
+      } else if (savedToken != null && savedToken.isNotEmpty) {
         await _syncAndroidHealthToken(savedToken);
       }
       if (!mounted) return;
@@ -182,6 +208,28 @@ extension _ChatScreenConnection on _ChatScreenState {
           ),
           actions: [
             TextButton(
+              onPressed: _busy ? null : () async {
+                final requestedUrl = _serverUrl.text.trim();
+                try {
+                  final paired = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => RhmDevicePairingDialog(
+                      serverUrl: requestedUrl,
+                      onPaired: _savePairedDeviceCredentials,
+                    ),
+                  );
+                  if (paired == true && context.mounted) {
+                    Navigator.pop(context, true);
+                  }
+                } catch (_) {
+                  if (context.mounted) {
+                    setDialogState(() => _error = 'تعذر بدء ربط الجهاز. تحقق من عنوان الخادم.');
+                  }
+                }
+              },
+              child: const Text('ربط آمن دون الرمز الرئيسي'),
+            ),
+            TextButton(
               onPressed: _busy ? null : () => Navigator.pop(context, false),
               child: const Text('إلغاء'),
             ),
@@ -241,6 +289,15 @@ extension _ChatScreenConnection on _ChatScreenState {
         // Store only after the server has accepted the token.
         await _ChatScreenState._storage.write(key: _ChatScreenState._serverKey, value: requestedUrl);
         await _ChatScreenState._storage.write(key: _ChatScreenState._tokenKey, value: enteredToken);
+        for (final key in [
+          _ChatScreenState._deviceAccessTokenKey,
+          _ChatScreenState._deviceRefreshTokenKey,
+          _ChatScreenState._deviceIdKey,
+          _ChatScreenState._devicePrivateKeyKey,
+          _ChatScreenState._devicePublicKeyKey,
+        ]) {
+          await _ChatScreenState._storage.delete(key: key);
+        }
         await _syncAndroidHealthToken(enteredToken);
         final previous = _api;
         _api = candidate;
@@ -277,6 +334,87 @@ extension _ChatScreenConnection on _ChatScreenState {
     }
     if (connected && dialogContext.mounted) {
       Navigator.pop(dialogContext, true);
+    }
+  }
+
+
+  Future<void> _persistDeviceCredentials(
+    String accessToken,
+    String refreshToken,
+  ) async {
+    await _ChatScreenState._storage.write(
+      key: _ChatScreenState._deviceAccessTokenKey,
+      value: accessToken,
+    );
+    await _ChatScreenState._storage.write(
+      key: _ChatScreenState._deviceRefreshTokenKey,
+      value: refreshToken,
+    );
+    await _syncAndroidHealthCredentials(accessToken, refreshToken);
+  }
+
+  Future<void> _savePairedDeviceCredentials({
+    required String accessToken,
+    required String refreshToken,
+    required String deviceId,
+    required String privateKeySeed,
+    required String publicKey,
+  }) async {
+    final url = _serverUrl.text.trim();
+    final candidate = RhmApiClient(
+      serverUrl: url,
+      token: accessToken,
+      refreshToken: refreshToken,
+      onCredentialsRotated: _persistDeviceCredentials,
+    );
+    try {
+      await candidate.checkConnection();
+      await _ChatScreenState._storage.write(
+        key: _ChatScreenState._serverKey,
+        value: url,
+      );
+      await _ChatScreenState._storage.write(
+        key: _ChatScreenState._deviceAccessTokenKey,
+        value: candidate.accessToken ?? accessToken,
+      );
+      await _ChatScreenState._storage.write(
+        key: _ChatScreenState._deviceRefreshTokenKey,
+        value: refreshToken,
+      );
+      await _ChatScreenState._storage.write(
+        key: _ChatScreenState._deviceIdKey,
+        value: deviceId,
+      );
+      await _ChatScreenState._storage.write(
+        key: _ChatScreenState._devicePrivateKeyKey,
+        value: privateKeySeed,
+      );
+      await _ChatScreenState._storage.write(
+        key: _ChatScreenState._devicePublicKeyKey,
+        value: publicKey,
+      );
+      await _ChatScreenState._storage.delete(key: _ChatScreenState._tokenKey);
+      final previous = _api;
+      _api = candidate;
+      _activeServerUrl = url;
+      if (mounted) {
+        _setState(() {
+          _connectionReady = true;
+          _status = 'تم ربط هذا الهاتف باعتماد مستقل وآمن.';
+          _error = null;
+        });
+      }
+      previous?.close();
+      await _syncAndroidHealthCredentials(
+        candidate.accessToken ?? accessToken,
+        refreshToken,
+      );
+      await _loadProviders();
+      await _loadProjects();
+      await _restoreConversation();
+    } catch (_) {
+      candidate.close();
+      rethrow;
     }
   }
 
