@@ -4,13 +4,16 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:uuid/uuid.dart';
 
 import 'api_client.dart';
+import 'app_version_footer.dart';
+import 'conversation/chat_composer.dart';
+import 'conversation/chat_message_bubble.dart';
+import 'conversation/chat_message.dart';
+import 'conversation/suggestion_chip.dart';
 import 'android_runtime_bridge.dart';
 import 'update_service.dart';
 import 'server_update_notifications.dart';
@@ -20,7 +23,6 @@ import 'control_center_screen.dart';
 import 'android_runtime_screen.dart';
 import 'mcp_screen.dart';
 import 'legacy_material_compatibility.dart';
-import 'markdown_table_theme.dart';
 import 'more_tab_availability.dart';
 import 'settings_screen.dart';
 import 'workspace_screens.dart';
@@ -111,49 +113,6 @@ class _RhmAppState extends State<RhmApp> {
       );
 }
 
-class _ChatMessage {
-  const _ChatMessage(this.isUser, this.text, {this.provider});
-
-  final bool isUser;
-  final String text;
-  final String? provider;
-}
-
-class _SuggestionChip extends StatelessWidget {
-  const _SuggestionChip({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => ActionChip(
-        onPressed: onTap,
-        avatar: Icon(
-          icon,
-          size: 17,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        label: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        side: BorderSide(
-          color: Theme.of(context).extension<RhmUiTokens>()!.border,
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 7),
-      );
-}
-
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
     super.key,
@@ -199,7 +158,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final _scrollController = ScrollController();
   final _speech = SpeechToText();
   final _tts = FlutterTts();
-  final List<_ChatMessage> _messages = [];
+  final List<RhmChatMessage> _messages = [];
   List<RhmConversation> _conversations = [];
   String? _conversationId;
   String _conversationTitle = 'محادثة جديدة';
@@ -1080,7 +1039,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         _projectScopeInitialized = conversation.projectScopeInitialized;
         _messages
           ..clear()
-          ..addAll(page.items.map((item) => _ChatMessage(
+          ..addAll(page.items.map((item) => RhmChatMessage(
                 item.role == 'user',
                 item.content,
                 provider: item.provider == null
@@ -1259,7 +1218,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       setState(() {
         _messages.insertAll(
           0,
-          page.items.map((item) => _ChatMessage(
+          page.items.map((item) => RhmChatMessage(
                 item.role == 'user',
                 item.content,
                 provider: item.provider == null
@@ -1575,7 +1534,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           !_messages.last.isUser;
       if (!isRetry || (!existingLastUserMessage && !restoredCompletedTurn)) {
         setState(() {
-          _messages.add(_ChatMessage(true, text));
+          _messages.add(RhmChatMessage(true, text));
           _status = 'تم حفظ رسالتك؛ ينتظر رد RHM…';
         });
       }
@@ -1598,7 +1557,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             !_messages.last.isUser &&
             _messages.last.text == turn.assistantMessage.content;
         if (!alreadyRenderedTurn && (_messages.isEmpty || _messages.last.isUser || _messages.last.text != turn.assistantMessage.content)) {
-          _messages.add(_ChatMessage(
+          _messages.add(RhmChatMessage(
             false,
             turn.assistantMessage.content,
             provider: '${turn.assistantMessage.provider ?? 'RHM'} · ${turn.assistantMessage.model ?? ''}',
@@ -2326,7 +2285,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         bottomNavigationBar: keyboardVisible
             ? null
             : isWide
-                ? const _AppVersionFooter()
+                ? const RhmAppVersionFooter()
                 : Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -2335,7 +2294,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         onDestinationSelected: (index) =>
                             setState(() => _selectedDestination = index),
                       ),
-                      const _AppVersionFooter(),
+                      const RhmAppVersionFooter(),
                     ],
                   ),
         body: Row(
@@ -2472,9 +2431,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: [
-                                  _SuggestionChip(label: 'خطّط ليومي', icon: Icons.today_rounded, onTap: () => _useSuggestion('ساعدني في تنظيم يومي.')),
-                                  _SuggestionChip(label: 'طوّر مشروعي', icon: Icons.code_rounded, onTap: () => _useSuggestion('ساعدني في تطوير مشروعي خطوة بخطوة.')),
-                                  _SuggestionChip(label: 'تعلّم شيئًا', icon: Icons.school_rounded, onTap: () => _useSuggestion('اقترح لي درسًا عمليًا أتعلمه اليوم.')),
+                                  RhmSuggestionChip(label: 'خطّط ليومي', icon: Icons.today_rounded, onTap: () => _useSuggestion('ساعدني في تنظيم يومي.')),
+                                  RhmSuggestionChip(label: 'طوّر مشروعي', icon: Icons.code_rounded, onTap: () => _useSuggestion('ساعدني في تطوير مشروعي خطوة بخطوة.')),
+                                  RhmSuggestionChip(label: 'تعلّم شيئًا', icon: Icons.school_rounded, onTap: () => _useSuggestion('اقترح لي درسًا عمليًا أتعلمه اليوم.')),
                                 ],
                               ),
                             ],
@@ -2483,352 +2442,34 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       );
                     }
                     final message = _messages[messageIndex];
-                    final colorScheme = Theme.of(context).colorScheme;
-                    final bubbleColor = message.isUser
-                        ? colorScheme.primary
-                        : colorScheme.surface;
-                    final textColor = message.isUser
-                        ? colorScheme.onPrimary
-                        : colorScheme.onSurface;
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        left: message.isUser ? 42 : 0,
-                        right: message.isUser ? 0 : 42,
-                        top: 5,
-                        bottom: 7,
-                      ),
-                      child: Align(
-                        alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: MediaQuery.sizeOf(context).width >= RhmDesignTokens.tabletBreakpoint
-                                ? 760
-                                : MediaQuery.sizeOf(context).width * .82,
-                          ),
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: bubbleColor,
-                              borderRadius: BorderRadius.only(
-                                topLeft: const Radius.circular(20),
-                                topRight: const Radius.circular(20),
-                                bottomLeft: Radius.circular(message.isUser ? 20 : 6),
-                                bottomRight: Radius.circular(message.isUser ? 6 : 20),
-                              ),
-                              boxShadow: message.isUser
-                                  ? const []
-                                  : [BoxShadow(
-                                    color: Theme.of(context).colorScheme.shadow.withValues(alpha: .08),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 3),
-                                  )],
-                              border: message.isUser
-                                  ? null
-                                  : Border.all(
-                                      color: Theme.of(context).extension<RhmUiTokens>()!.border,
-                                    ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(15, 12, 15, 10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Directionality(
-                                    textDirection: _directionFor(message.text),
-                                    child: message.isUser
-                                        ? SelectableText(
-                                            message.text,
-                                            style: TextStyle(fontSize: 15, height: 1.55, color: textColor),
-                                          )
-                                        : MarkdownBody(
-                                            data: message.text,
-                                            selectable: true,
-                                            styleSheet: MarkdownStyleSheet(
-                                              a: TextStyle(color: Theme.of(context).colorScheme.primary),
-                                              pPadding: EdgeInsets.zero,
-                                              p: TextStyle(
-                                                fontSize: 15,
-                                                height: 1.6,
-                                                color: Theme.of(context).colorScheme.onSurface,
-                                              ),
-                                              h1: TextStyle(
-                                                fontSize: 21,
-                                                fontWeight: FontWeight.w800,
-                                                color: Theme.of(context).colorScheme.onSurface,
-                                              ),
-                                              h2: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w700,
-                                                color: Theme.of(context).colorScheme.onSurface,
-                                              ),
-                                              h3: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w700,
-                                                color: Theme.of(context).colorScheme.onSurface,
-                                              ),
-                                              code: TextStyle(
-                                                fontSize: 13,
-                                                fontFamily: 'monospace',
-                                                color: Theme.of(context).colorScheme.primary,
-                                              ),
-                                              h1Padding: EdgeInsets.zero,
-                                              h2Padding: EdgeInsets.zero,
-                                              h3Padding: EdgeInsets.zero,
-                                              h4: Theme.of(context).textTheme.bodyLarge,
-                                              h5: Theme.of(context).textTheme.bodyLarge,
-                                              h6: Theme.of(context).textTheme.bodyLarge,
-                                              h4Padding: EdgeInsets.zero,
-                                              h5Padding: EdgeInsets.zero,
-                                              h6Padding: EdgeInsets.zero,
-                                              em: const TextStyle(fontStyle: FontStyle.italic),
-                                              strong: const TextStyle(fontWeight: FontWeight.bold),
-                                              del: const TextStyle(decoration: TextDecoration.lineThrough),
-                                              blockquote: Theme.of(context).textTheme.bodyMedium,
-                                              img: Theme.of(context).textTheme.bodyMedium,
-                                              checkbox: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                                color: Theme.of(context).colorScheme.primary,
-                                              ),
-                                              blockSpacing: 8,
-                                              listIndent: 24,
-                                              listBullet: Theme.of(context).textTheme.bodyMedium,
-                                              listBulletPadding: const EdgeInsets.only(right: 4),
-                                              tableHead: const TextStyle(fontWeight: FontWeight.w600),
-                                              tableBody: Theme.of(context).textTheme.bodyMedium,
-                                              tableHeadAlign: TextAlign.center,
-                                              tableBorder: buildRhmMarkdownTableBorder(Theme.of(context)),
-                                              tablePadding: const EdgeInsets.only(bottom: 4),
-                                              tableCellsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                                              tableCellsDecoration: const BoxDecoration(),
-                                              blockquotePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                              blockquoteDecoration: BoxDecoration(
-                                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                                borderRadius: BorderRadius.circular(3),
-                                                border: Border(
-                                                  left: BorderSide(
-                                                    color: Theme.of(context).colorScheme.primary,
-                                                    width: 3,
-                                                  ),
-                                                ),
-                                              ),
-                                              codeblockPadding: const EdgeInsets.all(8),
-                                              codeblockDecoration: BoxDecoration(
-                                                color: Theme.of(context).cardTheme.color ??
-                                                    Theme.of(context).colorScheme.surface,
-                                                borderRadius: BorderRadius.circular(2),
-                                              ),
-                                              horizontalRuleDecoration: BoxDecoration(
-                                                border: Border(
-                                                  top: BorderSide(
-                                                    width: 1,
-                                                    color: Theme.of(context).colorScheme.outlineVariant,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                  ),
-                                  const SizedBox(height: 7),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (!message.isUser) ...[
-                                        Icon(
-                                          Icons.auto_awesome,
-                                          size: 13,
-                                          color: Theme.of(context).colorScheme.primary,
-                                        ),
-                                        const SizedBox(width: 5),
-                                        Flexible(
-                                          child: Text(
-                                            message.provider ?? 'RHM',
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        IconButton(
-                                          visualDensity: VisualDensity.standard,
-                                          constraints: const BoxConstraints(
-                                            minWidth: RhmDesignTokens.minimumTouchTarget,
-                                            minHeight: RhmDesignTokens.minimumTouchTarget,
-                                          ),
-                                          padding: EdgeInsets.zero,
-                                          tooltip: 'قراءة الرد',
-                                          onPressed: () => _speakResponse(message.text),
-                                          icon: Icon(
-                                            Icons.volume_up_rounded,
-                                            size: 18,
-                                            color: Theme.of(context).colorScheme.primary,
-                                          ),
-                                        ),
-                                      ],
-                                      IconButton(
-                                        visualDensity: VisualDensity.standard,
-                                        constraints: const BoxConstraints(
-                                          minWidth: RhmDesignTokens.minimumTouchTarget,
-                                          minHeight: RhmDesignTokens.minimumTouchTarget,
-                                        ),
-                                        padding: EdgeInsets.zero,
-                                        tooltip: 'نسخ الرسالة',
-                                        onPressed: () => _copyMessage(message.text),
-                                        icon: Icon(
-                                          Icons.copy_rounded,
-                                          size: 16,
-                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                    return RhmChatMessageBubble(
+                      message: message,
+                      textDirection: _directionFor(message.text),
+                      onSpeak: message.isUser ? null : () => _speakResponse(message.text),
+                      onCopy: () => _copyMessage(message.text),
                     );
                   },
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-                child: Column(
-                  children: [
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedProjectName,
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                        labelText: _projectScopeInitialized
-                            ? 'سياق المشروع (مثبّت للمحادثة)'
-                            : 'ربط المحادثة بمشروع',
-                        prefixIcon: const Icon(Icons.folder_outlined),
-                      ),
-                      items: [
-                        const DropdownMenuItem<String>(
-                          value: null,
-                          child: Text('بدون مشروع محدد'),
-                        ),
-                        ..._projects.map(
-                          (project) => DropdownMenuItem<String>(
-                            value: project.name,
-                            child: Text(project.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          ),
-                        ),
-                      ],
-                      onChanged: (_projectScopeInitialized || _pendingRequestId != null)
-                          ? null
-                          : (value) {
-                              setState(() => _selectedProjectName = value);
-                              _scheduleComposerDraftSave(_prompt.text);
-                            },
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(26),
-                        border: Border.all(
-                          color: Theme.of(context).extension<RhmUiTokens>()!.border,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Theme.of(context).colorScheme.shadow.withValues(alpha: .08),
-                            blurRadius: 18,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          IconButton(
-                            tooltip: _listening ? 'إيقاف التسجيل' : 'تسجيل صوتي',
-                            onPressed: _busy ? null : _toggleRecording,
-                            style: IconButton.styleFrom(
-                              backgroundColor: _listening
-                                  ? Theme.of(context).colorScheme.errorContainer
-                                  : Theme.of(context).colorScheme.surfaceContainerHighest,
-                              foregroundColor: _listening
-                                  ? Theme.of(context).colorScheme.error
-                                  : Theme.of(context).colorScheme.primary,
-                            ),
-                            icon: Icon(_listening ? Icons.stop_rounded : Icons.mic_none_rounded),
-                          ),
-                          Expanded(
-                            child: TextField(
-                              controller: _prompt,
-                              minLines: 1,
-                              maxLines: 5,
-                              maxLength: 48000,
-                              textDirection: _directionFor(_prompt.text),
-                              onChanged: _scheduleComposerDraftSave,
-                              decoration: const InputDecoration(
-                                hintText: 'اكتب رسالتك…',
-                                counterText: '',
-                                filled: false,
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          IconButton.filled(
-                            tooltip: 'إرسال الرسالة',
-                            onPressed: _busy || _listening ? null : _sendMessage,
-                            style: IconButton.styleFrom(
-                              backgroundColor: Theme.of(context).colorScheme.primary,
-                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                              disabledBackgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                              minimumSize: const Size(
-                                RhmDesignTokens.minimumTouchTarget,
-                                RhmDesignTokens.minimumTouchTarget,
-                              ),
-                            ),
-                            icon: _busy
-                                ? SizedBox.square(
-                                    dimension: 18,
-                                    child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Theme.of(context).colorScheme.onPrimary,
-                              ),
-                                  )
-                                : const Icon(Icons.arrow_upward_rounded),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          tooltip: 'إيقاف القراءة الصوتية',
-                          visualDensity: VisualDensity.standard,
-                          onPressed: _speaking ? _stopSpeaking : null,
-                          icon: Icon(
-                            Icons.volume_off_outlined,
-                            size: 18,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        Flexible(
-                          child: Text(
-                            'قد تحتاج الردود إلى اتصال بخادم RHM.',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              RhmChatComposer(
+                controller: _prompt,
+                projects: _projects,
+                selectedProjectName: _selectedProjectName,
+                projectScopeInitialized: _projectScopeInitialized,
+                hasPendingRequest: _pendingRequestId != null,
+                isBusy: _busy,
+                isListening: _listening,
+                isSpeaking: _speaking,
+                onProjectChanged: (value) {
+                  setState(() => _selectedProjectName = value);
+                  _scheduleComposerDraftSave(_prompt.text);
+                },
+                onTextChanged: _scheduleComposerDraftSave,
+                directionFor: _directionFor,
+                onToggleRecording: _toggleRecording,
+                onSend: _sendMessage,
+                onStopSpeaking: _stopSpeaking,
               ),
             ],
           ),
@@ -2850,48 +2491,3 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 }
 
-class _AppVersionFooter extends StatefulWidget {
-  const _AppVersionFooter();
-
-  @override
-  State<_AppVersionFooter> createState() => _AppVersionFooterState();
-}
-
-class _AppVersionFooterState extends State<_AppVersionFooter> {
-  late final Future<PackageInfo> _packageInfo = PackageInfo.fromPlatform();
-
-  @override
-  Widget build(BuildContext context) => SafeArea(
-        top: false,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            border: Border(
-              top: BorderSide(
-                color: Theme.of(context).extension<RhmUiTokens>()!.border,
-              ),
-            ),
-          ),
-          child: FutureBuilder<PackageInfo>(
-            future: _packageInfo,
-            builder: (context, snapshot) {
-              final info = snapshot.data;
-              final version = info == null
-                  ? 'الإصدار …'
-                  : 'الإصدار ${info.version}+${info.buildNumber}';
-              return Text(
-                'RHM  •  $version  •  © ${DateTime.now().year}',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  letterSpacing: .2,
-                ),
-              );
-            },
-          ),
-        ),
-      );
-}
