@@ -3,21 +3,12 @@ part of 'chat_screen.dart';
 extension _ChatScreenUpdates on _ChatScreenState {
   Future<void> _checkForUpdates({bool silent = false}) async {
     if (_checkingUpdate) return;
-    final api = _api;
-    if (api == null) {
-      if (!silent && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('اتصل بخادم RHM أولاً لإتاحة فحص التحديثات الآمن.'),
-          ),
-        );
-      }
-      return;
-    }
     _setState(() => _checkingUpdate = true);
     final updater = RhmUpdateService();
     try {
-      final update = await updater.checkForUpdate(api);
+      // App releases are discovered directly from the dedicated public
+      // mobile repository. This path does not use RhmApiClient or its token.
+      final update = await updater.checkForUpdate();
       _lastUpdateCheckAt = DateTime.now();
       if (!mounted) return;
       if (update == null) {
@@ -48,6 +39,11 @@ extension _ChatScreenUpdates on _ChatScreenState {
                   Text('الإصدار: ${update.version}'),
                   Text('تاريخ النشر: $publishedDate'),
                   Text('حجم التنزيل: $sizeMb MB'),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'مصدر التحديث: مستودع تطبيق RHM على GitHub. لا يحتاج فحص الإصدار إلى تشغيل خادم المحادثات المحلي.',
+                    style: TextStyle(fontSize: 12),
+                  ),
                   const Divider(height: 24),
                   const Text(
                     'ما الجديد؟',
@@ -59,7 +55,7 @@ extension _ChatScreenUpdates on _ChatScreenState {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'سيتم التحقق من SHA-256 قبل فتح مثبت Android. يجب الموافقة على التثبيت من نافذة Android.',
+                    'سيُتحقق من SHA-256 وحجم APK قبل فتح مثبت Android. يجب الموافقة على التثبيت من نافذة Android.',
                     style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -82,15 +78,81 @@ extension _ChatScreenUpdates on _ChatScreenState {
         ),
       );
       if (install != true || !mounted) return;
-      await updater.downloadAndInstall(update, api);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم التحقق من التحديث. أكمل التثبيت من نافذة Android.'),
+
+      final progress = ValueNotifier<double?>(0);
+      var downloadDialogOpen = true;
+      final downloadDialog = showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('تنزيل تحديث RHM'),
+          content: ValueListenableBuilder<double?>(
+            valueListenable: progress,
+            builder: (context, value, _) {
+              final percent = value == null
+                  ? ''
+                  : ' ${(value * 100).clamp(0, 100).toStringAsFixed(0)}%';
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  LinearProgressIndicator(value: value),
+                  const SizedBox(height: 12),
+                  Text('جارٍ تنزيل الإصدار ${update.version}$percent'),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'يمكن استكمال التنزيل عند انقطاع الاتصال. لن يُفتح المثبت قبل اكتمال التحقق.',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ],
+              );
+            },
           ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                unawaited(updater.cancelDownload());
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('إلغاء التنزيل'),
+            ),
+          ],
+        ),
+      ).whenComplete(() => downloadDialogOpen = false);
+
+      try {
+        await updater.downloadAndInstall(
+          update,
+          onProgress: (receivedBytes, totalBytes) {
+            progress.value = totalBytes <= 0
+                ? null
+                : receivedBytes / totalBytes;
+          },
         );
+        if (mounted && downloadDialogOpen) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+        await downloadDialog;
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('تم التحقق من التحديث. أكمل التثبيت من نافذة Android.'),
+            ),
+          );
+        }
+      } on RhmUpdateCancelledException {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('تم إلغاء تنزيل التحديث. يمكنك استكماله لاحقًا.')),
+          );
+        }
+      } finally {
+        if (downloadDialogOpen && mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+        progress.dispose();
       }
-    } on RhmApiException catch (error) {
+    } on RhmUpdateException catch (error) {
       if (mounted && !silent) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error.message)),
@@ -105,10 +167,13 @@ extension _ChatScreenUpdates on _ChatScreenState {
     } catch (_) {
       if (mounted && !silent) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر إكمال تحديث RHM. تحقق من أذونات تثبيت التطبيقات ومساحة التخزين.')),
+          const SnackBar(
+            content: Text('تعذر إكمال تحديث RHM. تحقق من الإنترنت ومساحة التخزين وأذونات تثبيت التطبيقات.'),
+          ),
         );
       }
     } finally {
+      updater.close();
       if (mounted) _setState(() => _checkingUpdate = false);
     }
   }
