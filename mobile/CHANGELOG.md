@@ -2,6 +2,16 @@
 
 ## Unreleased — 2026-11-21
 
+### Independent app update manager
+- Moved app release discovery off the authenticated RHM FastAPI update proxy and onto the fixed RHM-Mobile-Server GitHub Releases source.
+- Added strict release tag, repository path, asset-name and HTTPS download-origin validation.
+- Replaced APK buffering with streamed-to-file downloads, progress callbacks, cancellation, HTTP Range resume, maximum-size enforcement, APK header validation and SHA-256 verification.
+- Added a standalone update notification channel and a best-effort 12-hour WorkManager release check that does not require the local RHM server or bearer token.
+- Added an in-app update check on launch and six-hour foreground/resume checks, with a download progress dialog and Android installer handoff.
+- Added the Android `REQUEST_INSTALL_PACKAGES` manifest permission for sideloaded releases; Android still requires the user to approve installation.
+- Production release remains gated on the original signing certificate, installed package identity and data-preservation acceptance.
+
+
 ### Architecture and maintainability
 - Reduced `main.dart` to the application bootstrap and moved root app configuration to `app/rhm_app.dart`.
 - Split the chat screen implementation into focused storage, update, connection, conversations, voice and navigation modules while keeping one lifecycle/state owner.
