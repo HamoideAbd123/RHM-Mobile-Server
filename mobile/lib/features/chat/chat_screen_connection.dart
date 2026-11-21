@@ -65,7 +65,6 @@ extension _ChatScreenConnection on _ChatScreenState {
           _status = 'اتصال محلي بخادم RHM جاهز.';
           _error = null;
         });
-        _checkForUpdates(silent: true);
       }
     } on RhmApiException catch (error) {
       if (mounted) {
@@ -278,9 +277,6 @@ extension _ChatScreenConnection on _ChatScreenState {
     }
     if (connected && dialogContext.mounted) {
       Navigator.pop(dialogContext, true);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _checkForUpdates(silent: true);
-      });
     }
   }
 
