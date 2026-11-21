@@ -33,16 +33,13 @@ The mobile app sends provider/model preferences to the backend. Provider credent
 
 MCP calls are mediated by the backend's allowlist, Tool Gateway, schema/risk policy and audit handling. The phone UI must retain explicit confirmation before an external tool invocation.
 
-## In-app update proxy
+## Android app updates
 
-The current client uses:
+The Android application updater is intentionally outside this authenticated API contract. It reads the latest stable release directly from the fixed public GitHub repository `HamoideAbd123/RHM-Mobile-Server`, validates the release tag and exact APK/checksum asset URLs, and downloads those assets over HTTPS. It does not send the local RHM bearer token to GitHub and does not require FastAPI to be running.
 
-- `GET /mobile/updates/latest`
-- `GET /mobile/updates/assets/{asset_id}`
+The authenticated API's `/server-update/*` endpoints continue to manage the Python/Next.js server runtime only. They are not used to update the Android APK.
 
-These are authenticated backend proxy routes. The backend validates release asset identity and downloads the APK and checksum. The current implementation was designed around private release metadata from `rhm-personal-ai-core`.
-
-Before public releases are consumed by installed devices, update proxy configuration must explicitly identify this repository as the allowed release source. The backend must validate the repository, release channel/tag and asset names rather than trusting arbitrary URLs supplied by the app.
+For app releases, the updater validates the declared APK size, validates the checksum file format, streams to a temporary file with resumable HTTP Range support, verifies the final SHA-256 digest, and delegates installation to Android. Android's package installer enforces package-signing continuity. See [Release and signing](RELEASE_AND_SIGNING.md).
 
 ## Transport boundary
 
