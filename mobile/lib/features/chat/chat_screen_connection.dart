@@ -374,6 +374,7 @@ extension _ChatScreenConnection on _ChatScreenState {
       token: accessToken,
       refreshToken: refreshToken,
       onCredentialsRotated: _persistDeviceCredentials,
+      onCredentialsInvalidated: _clearDeviceSessionCredentials,
     );
     try {
       await candidate.checkConnection();
