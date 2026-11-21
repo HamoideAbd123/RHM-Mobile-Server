@@ -46,6 +46,13 @@ object RhmHealthTokenStore {
 
     fun read(context: Context): String? = readCredentials(context)?.accessToken
 
+    fun clear(context: Context) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .remove(IV_KEY)
+            .remove(CIPHER_TEXT_KEY)
+            .apply()
+    }
+
     fun readCredentials(context: Context): RhmHealthCredentials? {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val ivText = prefs.getString(IV_KEY, null) ?: return null
