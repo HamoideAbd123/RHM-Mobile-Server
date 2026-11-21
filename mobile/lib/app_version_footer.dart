@@ -4,7 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'rhm_theme.dart';
 
 class RhmAppVersionFooter extends StatefulWidget {
-  const RhmAppVersionFooter();
+  const RhmAppVersionFooter({super.key});
 
   @override
   State<RhmAppVersionFooter> createState() => _RhmAppVersionFooterState();
