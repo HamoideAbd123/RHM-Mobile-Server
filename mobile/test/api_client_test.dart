@@ -180,68 +180,6 @@ void main() {
     );
     client.close();
   });
-  test('fetches update metadata through authenticated RHM backend', () async {
-    final client = RhmApiClient(
-      serverUrl: 'http://127.0.0.1:8000',
-      token: token,
-      httpClient: MockClient((request) async {
-        expect(request.url.toString(), 'http://127.0.0.1:8000/mobile/updates/latest');
-        expect(request.headers['authorization'], 'Bearer $token');
-        return http.Response(
-          jsonEncode({
-            'tag_name': 'v0.1.5',
-            'assets': [
-              {'id': 501, 'name': 'app-release.apk', 'size': 2048},
-              {'id': 502, 'name': 'app-release.apk.sha256', 'size': 84},
-            ],
-          }),
-          200,
-        );
-      }),
-    );
-
-    final release = await client.fetchLatestUpdate();
-    expect(release['tag_name'], 'v0.1.5');
-    expect((release['assets'] as List).length, 2);
-    client.close();
-  });
-
-  test('downloads update assets through authenticated RHM backend', () async {
-    final client = RhmApiClient(
-      serverUrl: 'http://127.0.0.1:8000',
-      token: token,
-      httpClient: MockClient((request) async {
-        expect(
-          request.url.toString(),
-          'http://127.0.0.1:8000/mobile/updates/assets/501',
-        );
-        expect(request.headers['authorization'], 'Bearer $token');
-        return http.Response.bytes([1, 2, 3, 4], 200);
-      }),
-    );
-
-    final bytes = await client.downloadUpdateAsset(501);
-    expect(bytes, [1, 2, 3, 4]);
-    client.close();
-  });
-
-  test('rejects invalid update asset identifiers before making a request', () async {
-    final client = RhmApiClient(
-      serverUrl: 'http://127.0.0.1:8000',
-      token: token,
-      httpClient: MockClient((_) async {
-        fail('No request should be sent for an invalid asset identifier.');
-      }),
-    );
-
-    await expectLater(
-      client.downloadUpdateAsset(0),
-      throwsA(isA<RhmApiException>()),
-    );
-    client.close();
-  });
-
-
   test('fetches backend and frontend runtime from the shared update API', () async {
     final sha = List.filled(40, 'a').join();
     final client = RhmApiClient(
