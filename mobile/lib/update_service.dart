@@ -67,9 +67,8 @@ class RhmUpdateService {
 
   RhmUpdateService({
     http.Client? httpClient,
-    Directory? downloadDirectory,
-  })  : _http = httpClient ?? http.Client(),
-        _downloadDirectory = downloadDirectory;
+    this._downloadDirectory,
+  }) : _http = httpClient ?? http.Client();
 
   final http.Client _http;
   final Directory? _downloadDirectory;
@@ -478,7 +477,7 @@ class RhmUpdateService {
       await completer.future;
       await sink.flush();
     } finally {
-      await subscription?.cancel();
+      await subscription.cancel();
       await sink.close();
       _activeDownloadSubscription = null;
       _activeDownloadCompleter = null;
