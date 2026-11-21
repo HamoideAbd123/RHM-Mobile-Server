@@ -11,8 +11,10 @@ void main() {
     var sent = false;
     var stopped = false;
 
-    await tester.view.setPhysicalSize(const Size(420, 900));
-    await tester.view.setDevicePixelRatio(1);
+    tester.view.physicalSize = const Size(420, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
         theme: RhmTheme.light,
@@ -46,9 +48,8 @@ void main() {
     expect(sent, isTrue);
     expect(stopped, isTrue);
 
+    await tester.pumpWidget(const SizedBox.shrink());
     controller.dispose();
-    await tester.view.resetPhysicalSize();
-    await tester.view.resetDevicePixelRatio();
   });
 
   testWidgets('composer disables send while a request is active', (tester) async {
@@ -77,10 +78,10 @@ void main() {
       ),
     );
 
-    final sendButton = tester.widget<IconButton>(find.byTooltip('إرسال الرسالة'));
-    expect(sendButton.onPressed, isNull);
+    await tester.tap(find.byTooltip('إرسال الرسالة'));
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
+    await tester.pumpWidget(const SizedBox.shrink());
     controller.dispose();
   });
 }

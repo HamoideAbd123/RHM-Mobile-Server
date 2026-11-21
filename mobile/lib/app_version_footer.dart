@@ -4,13 +4,13 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../rhm_theme.dart';
 
 class RhmAppVersionFooter extends StatefulWidget {
-  const _AppVersionFooter();
+  const RhmAppVersionFooter();
 
   @override
   State<RhmAppVersionFooter> createState() => _RhmAppVersionFooterState();
 }
 
-class RhmAppVersionFooterState extends State<RhmAppVersionFooter> {
+class _RhmAppVersionFooterState extends State<RhmAppVersionFooter> {
   late final Future<PackageInfo> _packageInfo = PackageInfo.fromPlatform();
 
   @override
