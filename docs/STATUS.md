@@ -1,7 +1,7 @@
 # RHM Mobile Server — verified status
 
 **Status date:** 2026-11-21  
-**Work branch:** `bootstrap/import-flutter-client-2026-11-20`  
+**Work branch:** `bootstrap/update-manager-independent-2026-11-21`  
 **Verified code commit:** `cc4b621074ae9e0be81b01163c22a5c3a10f330d`  
 **Private core:** `HamoideAbd123/rhm-personal-ai-core` (authoritative backend)  
 **Public mobile:** `HamoideAbd123/RHM-Mobile-Server` (Android/Flutter integration)
@@ -24,6 +24,15 @@ fd86fcab3fdb897f5c0b1b90b0d4ea7e17ea70389a15053587eb7a412ae5b043
 ```
 
 The artifact expires on **2026-12-05 20:27 UTC**. It is a **debug/test APK**, not a production-signed release. Its package ID is `com.rhm.rhm_mobile.debug`; it must not be treated as an in-place update for the production package `com.rhm.rhm_mobile`.
+
+## Independent Android app updater — 2026-11-21
+
+- The updater has been moved off the private Core FastAPI proxy and now reads the fixed public mobile repository's GitHub Releases API.
+- The implementation includes exact repository/tag/asset URL validation, streamed APK download, resumable Range requests, cancellation, byte progress, size/APK-header/SHA-256 verification, Android installer handoff, foreground checks, and a best-effort 12-hour WorkManager notification check.
+- This updater does not use the saved RHM server URL or RHM bearer token.
+- Flutter tests, static analysis and ARM64 debug CI for the implementation branch are pending final verification. A debug APK is not a production update.
+- Huawei physical-device acceptance, exact installed release certificate comparison and a data-preserving in-place install remain required.
+- No app version bump, production-signed APK, GitHub release or mobile release tag has been created.
 
 ## Flutter refactor completed on this branch
 
