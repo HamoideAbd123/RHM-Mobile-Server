@@ -35,10 +35,15 @@ The public workflow runs unit/widget tests and static analysis, then creates an 
 6. Sign the release APK with the existing key, generate SHA-256, run installation/update tests on a copy/test device, and verify data preservation.
 7. Only then publish a matching `vX.Y.Z` GitHub Release.
 
-## Update proxy migration
+## Independent app update path
 
-The current app asks the private FastAPI backend for update metadata and assets. The backend's GitHub token and release-source allowlist are currently associated with the private core repository. Before the public repository starts publishing app releases, update and test the private backend's update proxy to read this repository and only its approved stable APK/checksum assets. Keep the credential server-side and read-only.
+The Android application updater now reads the latest stable release directly from the fixed public repository `HamoideAbd123/RHM-Mobile-Server`. It does not depend on the private FastAPI backend, an API token, or the server's `/mobile/updates/*` routes.
 
+The Flutter client validates the release page and exact asset URLs, requires one `app-release.apk` and one `app-release.apk.sha256` asset, checks the APK's declared size, streams the APK to temporary storage, supports resuming interrupted transfers with HTTP Range, and verifies the SHA-256 digest before invoking Android's installer. WorkManager runs a best-effort 12-hour background check and posts a notification for a newly discovered stable version. Android still requires the user to approve installation.
+
+SHA-256 is an integrity check and the checksum is delivered by the same release source. It does not independently authenticate who published the release. The original Android APK signing certificate is the authenticity and update-compatibility control: Android must reject an APK signed by an unrelated key. Do not install a release build over the existing app until the package ID and signer fingerprint are verified.
+
+The signing workflow must remain private. It should check out this public repository at a reviewed immutable commit or protected release tag, run tests and analysis, build ARM64, verify `com.rhm.rhm_mobile`, verify the expected certificate SHA-256 fingerprint, and upload the signed APK plus checksum to a GitHub Release in this repository using a narrowly scoped publishing credential. Never move the keystore or passwords into this public repository. The existing private-core workflow proposal in [private PR #45](https://github.com/HamoideAbd123/rhm-personal-ai-core/pull/45) has not yet produced a signed artifact; confirm it is still suitable before relying on it.
 
 ## Debug package isolation
 
