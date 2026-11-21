@@ -13,9 +13,11 @@ extension RhmDevicePairingApi on RhmApiClient {
       timeout: const Duration(seconds: 20),
     );
     if (response.statusCode != 201) {
-      throw RhmApiException(
-        'تعذر إنشاء طلب ربط الجهاز (HTTP ${response.statusCode}).',
-      );
+      final data = _decode(response);
+      final detail = data is Map<String, dynamic> && data['detail'] is String
+          ? data['detail'] as String
+          : 'HTTP ${response.statusCode}';
+      throw RhmApiException('تعذر إنشاء طلب ربط الجهاز: $detail');
     }
     final data = _decode(response);
     if (data is! Map<String, dynamic> ||
