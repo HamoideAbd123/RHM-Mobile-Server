@@ -1,7 +1,7 @@
 part of 'chat_screen.dart';
 
 extension _ChatScreenNavigation on _ChatScreenState {
-  Future<void> this._openWorkspace(String section, {bool closeDrawer = false}) async {
+  Future<void> _openWorkspace(String section, {bool closeDrawer = false}) async {
     if (closeDrawer) Navigator.pop(context);
 
     // Settings are a local application surface and must remain usable offline.
@@ -18,29 +18,29 @@ extension _ChatScreenNavigation on _ChatScreenState {
             offlineRecognition: _offlineRecognition,
             themeMode: widget.themeMode,
             onThemeModeChanged: widget.onThemeModeChanged,
-            onOpenConnectionSettings: this._showConnectionSettings,
-            onOpenAndroidRuntime: () => this._openWorkspace('android-runtime'),
-            onOpenVoiceDiagnostics: () => this._openWorkspace('voice'),
-            onCheckAppUpdates: () => this._checkForUpdates(),
-            onRefreshProviders: _connectionReady ? this._loadProviders : null,
+            onOpenConnectionSettings: _showConnectionSettings,
+            onOpenAndroidRuntime: () => _openWorkspace('android-runtime'),
+            onOpenVoiceDiagnostics: () => _openWorkspace('voice'),
+            onCheckAppUpdates: () => _checkForUpdates(),
+            onRefreshProviders: _connectionReady ? _loadProviders : null,
             onProviderChanged: (value) {
-              this._setState(() {
+              setState(() {
                 _preferredProvider = value;
                 _preferredModel = null;
               });
-              this._persistAppPreferences();
+              _persistAppPreferences();
             },
             onModelChanged: (value) {
-              this._setState(() => _preferredModel = value);
-              this._persistAppPreferences();
+              setState(() => _preferredModel = value);
+              _persistAppPreferences();
             },
             onLocaleChanged: (value) {
-              this._setState(() => _locale = value);
-              this._persistAppPreferences();
+              setState(() => _locale = value);
+              _persistAppPreferences();
             },
             onOfflineRecognitionChanged: (value) {
-              this._setState(() => _offlineRecognition = value);
-              this._persistAppPreferences();
+              setState(() => _offlineRecognition = value);
+              _persistAppPreferences();
             },
           ),
         ),
@@ -57,7 +57,7 @@ extension _ChatScreenNavigation on _ChatScreenState {
 
     final api = _api;
     if (api == null) {
-      await this._showConnectionSettings();
+      await _showConnectionSettings();
       return;
     }
     final Widget screen = switch (section) {
@@ -94,7 +94,7 @@ extension _ChatScreenNavigation on _ChatScreenState {
     );
   }
 
-  void this._scrollToLatest() {
+  void _scrollToLatest() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -106,14 +106,14 @@ extension _ChatScreenNavigation on _ChatScreenState {
     });
   }
 
-  TextDirection this._directionFor(String value) {
+  TextDirection _directionFor(String value) {
     if (value.trim().isEmpty) return TextDirection.rtl;
     return RegExp(r'[\u0600-\u06ff]').hasMatch(value)
         ? TextDirection.rtl
         : TextDirection.ltr;
   }
 
-  Widget this._buildSidebar() {
+  Widget _buildSidebar() {
     final available = <RhmProviderInfo>[];
     final seenProviders = <String>{};
     for (final provider in _providers) {
@@ -190,7 +190,7 @@ extension _ChatScreenNavigation on _ChatScreenState {
               FilledButton.icon(
                 onPressed: () {
                   Navigator.pop(context);
-                  this._newConversation();
+                  _newConversation();
                 },
                 icon: const Icon(Icons.add_rounded),
                 label: const Text('محادثة جديدة'),
@@ -230,11 +230,11 @@ extension _ChatScreenNavigation on _ChatScreenState {
                   ),
                 ],
                 onChanged: (value) {
-                  this._setState(() {
+                  setState(() {
                     _preferredProvider = value;
                     _preferredModel = null;
                   });
-                  this._persistAppPreferences();
+                  _persistAppPreferences();
                 },
               ),
               const SizedBox(height: 8),
@@ -259,15 +259,15 @@ extension _ChatScreenNavigation on _ChatScreenState {
                 onChanged: selectedProvider == null
                     ? null
                     : (value) {
-                        this._setState(() => _preferredModel = value);
-                        this._persistAppPreferences();
+                        setState(() => _preferredModel = value);
+                        _persistAppPreferences();
                       },
               ),
               const SizedBox(height: 6),
               OutlinedButton.icon(
                 onPressed: _api == null || _loadingProviders
                     ? null
-                    : this._loadProviders,
+                    : _loadProviders,
                 icon: const Icon(Icons.refresh_rounded),
                 label: Text(
                   _loadingProviders ? 'جارٍ التحديث…' : 'تحديث النماذج',
@@ -293,7 +293,7 @@ extension _ChatScreenNavigation on _ChatScreenState {
                     tooltip: 'تحديث سجل المحادثات',
                     onPressed: _loadingConversations
                         ? null
-                        : this._refreshConversationList,
+                        : _refreshConversationList,
                     icon: _loadingConversations
                         ? const SizedBox.square(
                             dimension: 18,
@@ -306,7 +306,7 @@ extension _ChatScreenNavigation on _ChatScreenState {
               const SizedBox(height: 4),
               TextField(
                 controller: _conversationSearch,
-                onChanged: (_) => this._setState(() {}),
+                onChanged: (_) => setState(() {}),
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
                   hintText: 'ابحث في عناوين المحادثات',
@@ -317,7 +317,7 @@ extension _ChatScreenNavigation on _ChatScreenState {
                           tooltip: 'مسح البحث',
                           onPressed: () {
                             _conversationSearch.clear();
-                            this._setState(() {});
+                            setState(() {});
                           },
                           icon: const Icon(Icons.close_rounded),
                         ),
@@ -360,13 +360,13 @@ extension _ChatScreenNavigation on _ChatScreenState {
                     selectedTileColor: tokens.accentSoft,
                     onTap: () {
                       Navigator.pop(context);
-                      this._openConversation(conversation);
+                      _openConversation(conversation);
                     },
                     trailing: PopupMenuButton<String>(
                       tooltip: 'خيارات المحادثة',
                       onSelected: (value) {
-                        if (value == 'rename') this._renameConversation(conversation);
-                        if (value == 'delete') this._deleteConversation(conversation);
+                        if (value == 'rename') _renameConversation(conversation);
+                        if (value == 'delete') _deleteConversation(conversation);
                       },
                       itemBuilder: (_) => const [
                         PopupMenuItem(
@@ -388,7 +388,7 @@ extension _ChatScreenNavigation on _ChatScreenState {
     );
   }
 
-  Widget this._buildConnectionRequiredScreen(String destination) => Scaffold(
+  Widget _buildConnectionRequiredScreen(String destination) => Scaffold(
         appBar: AppBar(title: Text(destination)),
         body: Center(
           child: Padding(
@@ -408,7 +408,7 @@ extension _ChatScreenNavigation on _ChatScreenState {
                 ),
                 const SizedBox(height: 14),
                 FilledButton.icon(
-                  onPressed: this._showConnectionSettings,
+                  onPressed: _showConnectionSettings,
                   icon: const Icon(Icons.settings_ethernet_rounded),
                   label: const Text('إعداد الاتصال'),
                 ),
@@ -418,7 +418,7 @@ extension _ChatScreenNavigation on _ChatScreenState {
         ),
       );
 
-  Widget this._hubTile({
+  Widget _hubTile({
     required IconData icon,
     required String title,
     required String subtitle,
@@ -440,12 +440,12 @@ extension _ChatScreenNavigation on _ChatScreenState {
         ),
       );
 
-  Widget this._buildActivityTab() {
+  Widget _buildActivityTab() {
     if (!shouldShowMoreServerModules(
       hasApiClient: _api != null,
       connectionReady: _connectionReady,
     )) {
-      return this._buildConnectionRequiredScreen('النشاط');
+      return _buildConnectionRequiredScreen('النشاط');
     }
     return Scaffold(
       appBar: AppBar(title: const Text('النشاط')),
@@ -459,30 +459,30 @@ extension _ChatScreenNavigation on _ChatScreenState {
             ),
           ),
           const SizedBox(height: 14),
-          this._hubTile(
+          _hubTile(
             icon: Icons.checklist_rounded,
             title: 'المهام',
             subtitle: 'المهام المفتوحة وحالات التنفيذ والأولويات',
-            onTap: () => this._openWorkspace('tasks'),
+            onTap: () => _openWorkspace('tasks'),
           ),
-          this._hubTile(
+          _hubTile(
             icon: Icons.notifications_active_outlined,
             title: 'الإشعارات',
             subtitle: 'تحديثات المحادثات والمهام والنظام',
-            onTap: () => this._openWorkspace('notifications'),
+            onTap: () => _openWorkspace('notifications'),
           ),
-          this._hubTile(
+          _hubTile(
             icon: Icons.receipt_long_outlined,
             title: 'سجل التدقيق',
             subtitle: 'الأحداث والعمليات المسجلة في RHM',
-            onTap: () => this._openWorkspace('audit'),
+            onTap: () => _openWorkspace('audit'),
           ),
         ],
       ),
     );
   }
 
-  Widget this._buildMoreTab() {
+  Widget _buildMoreTab() {
     final showServerModules = shouldShowMoreServerModules(
       hasApiClient: _api != null,
       connectionReady: _connectionReady,
@@ -504,54 +504,54 @@ extension _ChatScreenNavigation on _ChatScreenState {
                 ),
               ),
             ),
-          this._hubTile(
+          _hubTile(
             icon: Icons.settings_outlined,
             title: 'إعدادات RHM',
             subtitle: 'الاتصال والمزوّد والصوت والتحديثات',
-            onTap: () => this._openWorkspace('settings'),
+            onTap: () => _openWorkspace('settings'),
           ),
           if (showServerModules) ...[
-            this._hubTile(
+            _hubTile(
               icon: Icons.psychology_outlined,
               title: 'الذاكرة',
               subtitle: 'استعراض الذكريات والبحث وإدارتها',
-              onTap: () => this._openWorkspace('memories'),
+              onTap: () => _openWorkspace('memories'),
             ),
-            this._hubTile(
+            _hubTile(
               icon: Icons.smart_toy_outlined,
               title: 'وكيل RHM والأدوات',
               subtitle: 'تشغيل الوكيل ومراجعة الأدوات المسموح بها',
-              onTap: () => this._openWorkspace('agent'),
+              onTap: () => _openWorkspace('agent'),
             ),
-            this._hubTile(
+            _hubTile(
               icon: Icons.devices_other_outlined,
               title: 'الأجهزة',
               subtitle: 'الأجهزة المسجلة وحالة اتصالها',
-              onTap: () => this._openWorkspace('devices'),
+              onTap: () => _openWorkspace('devices'),
             ),
-            this._hubTile(
+            _hubTile(
               icon: Icons.hub_outlined,
               title: 'تكاملات MCP',
               subtitle: 'خوادم MCP والأدوات المعتمدة والقراءة فقط',
-              onTap: () => this._openWorkspace('mcp'),
+              onTap: () => _openWorkspace('mcp'),
             ),
-            this._hubTile(
+            _hubTile(
               icon: Icons.tune_rounded,
               title: 'مركز التحكم',
               subtitle: 'حالة النظام والتطبيقات والوحدات',
-              onTap: () => this._openWorkspace('control'),
+              onTap: () => _openWorkspace('control'),
             ),
-            this._hubTile(
+            _hubTile(
               icon: Icons.system_update_alt_rounded,
               title: 'تحديثات الخادم',
               subtitle: 'حالة الخادم والتحديثات',
-              onTap: () => this._openWorkspace('server-update'),
+              onTap: () => _openWorkspace('server-update'),
             ),
-            this._hubTile(
+            _hubTile(
               icon: Icons.graphic_eq_rounded,
               title: 'تشخيص الصوت',
               subtitle: 'محركات النطق والميكروفون واللغات',
-              onTap: () => this._openWorkspace('voice'),
+              onTap: () => _openWorkspace('voice'),
             ),
           ],
         ],

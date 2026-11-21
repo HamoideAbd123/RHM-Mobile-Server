@@ -36,6 +36,20 @@ part 'chat_screen_conversations.dart';
 part 'chat_screen_voice.dart';
 part 'chat_screen_navigation.dart';
 
+class ChatScreen extends StatefulWidget {
+  const ChatScreen({
+    super.key,
+    required this.themeMode,
+    required this.onThemeModeChanged,
+  });
+
+  final ThemeMode themeMode;
+  final ValueChanged<ThemeMode> onThemeModeChanged;
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
 class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   void _setState(VoidCallback callback) {
     if (!mounted) return;

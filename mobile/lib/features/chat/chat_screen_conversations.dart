@@ -1,21 +1,21 @@
 part of 'chat_screen.dart';
 
 extension _ChatScreenConversations on _ChatScreenState {
-  Future<void> this._restoreConversation() async {
+  Future<void> _restoreConversation() async {
     final api = _api;
     if (api == null) return;
-    this._setState(() => _loadingConversations = true);
+    setState(() => _loadingConversations = true);
     try {
-      final savedId = await _ChatScreenState._storage.read(key: _ChatScreenState._conversationKey);
+      final savedId = await _storage.read(key: _conversationKey);
       final conversations = await api.listConversations();
       if (!mounted) return;
       final saved = conversations.where((item) => item.id == savedId);
       final selected = saved.isNotEmpty
           ? saved.first
           : (conversations.isNotEmpty ? conversations.first : null);
-      this._setState(() => _conversations = conversations);
+      setState(() => _conversations = conversations);
       if (selected == null) {
-        this._setState(() {
+        setState(() {
           _conversationId = null;
           _conversationTitle = 'محادثة جديدة';
           _selectedProjectName = null;
@@ -25,36 +25,36 @@ extension _ChatScreenConversations on _ChatScreenState {
           _nextMessageCursor = null;
         });
       } else {
-        await this._openConversation(selected, refreshList: false, force: true);
+        await _openConversation(selected, refreshList: false, force: true);
       }
-      await this._restorePendingTurn();
+      await _restorePendingTurn();
     } catch (error) {
       if (mounted) {
-        this._setState(() => _error = error is RhmApiException
+        setState(() => _error = error is RhmApiException
             ? error.message
             : 'تعذر استعادة سجل المحادثات.');
       }
     } finally {
-      if (mounted) this._setState(() => _loadingConversations = false);
+      if (mounted) setState(() => _loadingConversations = false);
     }
   }
 
-  Future<void> this._refreshConversationList() async {
+  Future<void> _refreshConversationList() async {
     final api = _api;
     if (api == null) return;
     try {
       final conversations = await api.listConversations();
-      if (mounted) this._setState(() => _conversations = conversations);
+      if (mounted) setState(() => _conversations = conversations);
     } catch (error) {
       if (mounted) {
-        this._setState(() => _error = error is RhmApiException
+        setState(() => _error = error is RhmApiException
             ? error.message
             : 'تعذر تحديث سجل المحادثات.');
       }
     }
   }
 
-  Future<void> this._openConversation(
+  Future<void> _openConversation(
     RhmConversation conversation, {
     bool refreshList = true,
     bool force = false,
@@ -64,18 +64,18 @@ extension _ChatScreenConversations on _ChatScreenState {
     if (!force &&
         _pendingRequestId != null &&
         _pendingConversationId != conversation.id) {
-      final proceed = await this._confirmDiscardPendingTurn('فتح محادثة أخرى');
+      final proceed = await _confirmDiscardPendingTurn('فتح محادثة أخرى');
       if (!proceed || !mounted) return;
     }
-    this._setState(() {
+    setState(() {
       _loadingConversations = true;
       _error = null;
     });
     try {
       final page = await api.listConversationMessages(conversation.id);
       if (!mounted) return;
-      await _ChatScreenState._storage.write(key: _ChatScreenState._conversationKey, value: conversation.id);
-      this._setState(() {
+      await _storage.write(key: _conversationKey, value: conversation.id);
+      setState(() {
         _conversationId = conversation.id;
         _conversationTitle = conversation.title;
         _selectedProjectName = conversation.projectName;
@@ -92,34 +92,34 @@ extension _ChatScreenConversations on _ChatScreenState {
         _hasOlderMessages = page.hasMore;
         _nextMessageCursor = page.nextBefore;
       });
-      if (refreshList) await this._refreshConversationList();
-      this._scrollToLatest();
+      if (refreshList) await _refreshConversationList();
+      _scrollToLatest();
     } catch (error) {
       if (mounted) {
-        this._setState(() => _error = error is RhmApiException
+        setState(() => _error = error is RhmApiException
             ? error.message
             : 'تعذر فتح المحادثة المحفوظة.');
       }
     } finally {
-      if (mounted) this._setState(() => _loadingConversations = false);
+      if (mounted) setState(() => _loadingConversations = false);
     }
   }
 
-  Future<void> this._newConversation() async {
+  Future<void> _newConversation() async {
     final api = _api;
     if (_pendingRequestId != null) {
-      final proceed = await this._confirmDiscardPendingTurn('بدء محادثة جديدة');
+      final proceed = await _confirmDiscardPendingTurn('بدء محادثة جديدة');
       if (!proceed || !mounted) return;
     }
     if (api == null) {
-      await this._showConnectionSettings();
+      await _showConnectionSettings();
       return;
     }
     try {
       final conversation = await api.createConversation();
       if (!mounted) return;
-      await _ChatScreenState._storage.write(key: _ChatScreenState._conversationKey, value: conversation.id);
-      this._setState(() {
+      await _storage.write(key: _conversationKey, value: conversation.id);
+      setState(() {
         _conversationId = conversation.id;
         _conversationTitle = conversation.title;
         _selectedProjectName = null;
@@ -130,17 +130,17 @@ extension _ChatScreenConversations on _ChatScreenState {
         _error = null;
         _status = 'بدأت محادثة جديدة.';
       });
-      await this._refreshConversationList();
+      await _refreshConversationList();
     } catch (error) {
       if (mounted) {
-        this._setState(() => _error = error is RhmApiException
+        setState(() => _error = error is RhmApiException
             ? error.message
             : 'تعذر إنشاء محادثة جديدة.');
       }
     }
   }
 
-  Future<void> this._renameConversation(RhmConversation conversation) async {
+  Future<void> _renameConversation(RhmConversation conversation) async {
     final controller = TextEditingController(text: conversation.title);
     final title = await showDialog<String>(
       context: context,
@@ -170,19 +170,19 @@ extension _ChatScreenConversations on _ChatScreenState {
       final renamed = await _api!.renameConversation(conversation.id, title);
       if (!mounted) return;
       if (_conversationId == renamed.id) {
-        this._setState(() => _conversationTitle = renamed.title);
+        setState(() => _conversationTitle = renamed.title);
       }
-      await this._refreshConversationList();
+      await _refreshConversationList();
     } catch (error) {
       if (mounted) {
-        this._setState(() => _error = error is RhmApiException
+        setState(() => _error = error is RhmApiException
             ? error.message
             : 'تعذر إعادة تسمية المحادثة.');
       }
     }
   }
 
-  Future<void> this._deleteConversation(RhmConversation conversation) async {
+  Future<void> _deleteConversation(RhmConversation conversation) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -208,11 +208,11 @@ extension _ChatScreenConversations on _ChatScreenState {
       await _api!.deleteConversation(conversation.id);
       if (!mounted) return;
       if (_pendingConversationId == conversation.id) {
-        await this._clearPendingTurn();
+        await _clearPendingTurn();
       }
       if (_conversationId == conversation.id) {
-        await _ChatScreenState._storage.delete(key: _ChatScreenState._conversationKey);
-        this._setState(() {
+        await _storage.delete(key: _conversationKey);
+        setState(() {
           _conversationId = null;
           _conversationTitle = 'محادثة جديدة';
           _selectedProjectName = null;
@@ -222,7 +222,7 @@ extension _ChatScreenConversations on _ChatScreenState {
           _nextMessageCursor = null;
         });
       }
-      await this._refreshConversationList();
+      await _refreshConversationList();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تم حذف المحادثة ورسائلها.')),
@@ -230,14 +230,14 @@ extension _ChatScreenConversations on _ChatScreenState {
       }
     } catch (error) {
       if (mounted) {
-        this._setState(() => _error = error is RhmApiException
+        setState(() => _error = error is RhmApiException
             ? error.message
             : 'تعذر حذف المحادثة.');
       }
     }
   }
 
-  Future<void> this._loadOlderMessages() async {
+  Future<void> _loadOlderMessages() async {
     final api = _api;
     final id = _conversationId;
     final cursor = _nextMessageCursor;
@@ -251,14 +251,14 @@ extension _ChatScreenConversations on _ChatScreenState {
         ? _scrollController.position.maxScrollExtent
         : 0.0;
 
-    this._setState(() => _loadingOlderMessages = true);
+    setState(() => _loadingOlderMessages = true);
     try {
       final page = await api.listConversationMessages(
         id,
         before: cursor,
       );
       if (!mounted) return;
-      this._setState(() {
+      setState(() {
         _messages.insertAll(
           0,
           page.items.map((item) => RhmChatMessage(
@@ -283,30 +283,30 @@ extension _ChatScreenConversations on _ChatScreenState {
       });
     } catch (error) {
       if (mounted) {
-        this._setState(() => _error = error is RhmApiException
+        setState(() => _error = error is RhmApiException
             ? error.message
             : 'تعذر تحميل الرسائل الأقدم.');
       }
     } finally {
-      if (mounted) this._setState(() => _loadingOlderMessages = false);
+      if (mounted) setState(() => _loadingOlderMessages = false);
     }
   }
 
-  Future<void> this._sendMessage() async {
+  Future<void> _sendMessage() async {
     final api = _api;
     final text = _prompt.text.trim();
     if (api == null) {
-      await this._showConnectionSettings();
+      await _showConnectionSettings();
       return;
     }
     if (text.isEmpty || _busy) return;
     if (_pendingRequestId != null &&
         (_pendingPrompt != text || _pendingConversationId != _conversationId)) {
-      final proceed = await this._confirmDiscardPendingTurn('إرسال رسالة مختلفة');
+      final proceed = await _confirmDiscardPendingTurn('إرسال رسالة مختلفة');
       if (!proceed || !mounted) return;
     }
 
-    this._setState(() {
+    setState(() {
       _busy = true;
       _error = null;
       _status = 'جارٍ حفظ الرسالة وإرسالها إلى RHM…';
@@ -318,7 +318,7 @@ extension _ChatScreenConversations on _ChatScreenState {
       // sending network requests, so an app/process restart cannot lose it.
       _composerDraftTimer?.cancel();
       _composerDraftTimer = null;
-      await this._saveComposerDraft(text);
+      await _saveComposerDraft(text);
       if (!mounted) return;
       _prompt.clear();
       var conversationId = _conversationId;
@@ -327,16 +327,16 @@ extension _ChatScreenConversations on _ChatScreenState {
           title: text.length > 48 ? '${text.substring(0, 48)}…' : text,
         );
         conversationId = conversation.id;
-        await _ChatScreenState._storage.write(key: _ChatScreenState._conversationKey, value: conversationId);
+        await _storage.write(key: _conversationKey, value: conversationId);
         if (!mounted) return;
-        this._setState(() {
+        setState(() {
           _conversationId = conversationId;
           _conversationTitle = conversation.title;
         });
       } else if (_messages.isEmpty && _conversationTitle == 'محادثة جديدة') {
         final title = text.length > 48 ? '${text.substring(0, 48)}…' : text;
         final renamed = await api.renameConversation(conversationId, title);
-        if (mounted) this._setState(() => _conversationTitle = renamed.title);
+        if (mounted) setState(() => _conversationTitle = renamed.title);
       }
 
       final activeConversationId = conversationId;
@@ -346,7 +346,7 @@ extension _ChatScreenConversations on _ChatScreenState {
           _pendingConversationId == activeConversationId;
       if (!isRetry || pendingRequestId == null) {
         pendingRequestId = const Uuid().v4();
-        await this._savePendingTurn(
+        await _savePendingTurn(
           requestId: pendingRequestId,
           prompt: text,
           conversationId: activeConversationId,
@@ -366,12 +366,12 @@ extension _ChatScreenConversations on _ChatScreenState {
           _messages[_messages.length - 2].text == text &&
           !_messages.last.isUser;
       if (!isRetry || (!existingLastUserMessage && !restoredCompletedTurn)) {
-        this._setState(() {
+        setState(() {
           _messages.add(RhmChatMessage(true, text));
           _status = 'تم حفظ رسالتك؛ ينتظر رد RHM…';
         });
       }
-      this._scrollToLatest();
+      _scrollToLatest();
 
       final turn = await api.sendConversationMessage(
         activeConversationId,
@@ -382,7 +382,7 @@ extension _ChatScreenConversations on _ChatScreenState {
         preferredModel: isRetry ? _pendingModel : _preferredModel,
       );
       if (!mounted) return;
-      this._setState(() {
+      setState(() {
         final alreadyRenderedTurn = isRetry &&
             _messages.length >= 2 &&
             _messages[_messages.length - 2].isUser &&
@@ -401,17 +401,17 @@ extension _ChatScreenConversations on _ChatScreenState {
             : 'تم حفظ المحادثة والرد في سجل RHM.';
       });
       if (_prompt.text.trim().isEmpty) {
-        await this._clearComposerDraft();
+        await _clearComposerDraft();
       } else {
-        await this._persistComposerDraft(_prompt.text);
+        await _persistComposerDraft(_prompt.text);
       }
-      await this._clearPendingTurn();
+      await _clearPendingTurn();
       _projectScopeInitialized = true;
-      await this._refreshConversationList();
-      this._scrollToLatest();
+      await _refreshConversationList();
+      _scrollToLatest();
     } on RhmApiException catch (error) {
       if (mounted) {
-        this._setState(() {
+        setState(() {
           _error = error.message;
           _status = 'لم نتأكد من اكتمال الرسالة. أعد المحاولة؛ سيُستخدم معرّف الطلب نفسه.';
           final draftToRestore = _prompt.text.trim().isEmpty ? text : _prompt.text;
@@ -419,12 +419,12 @@ extension _ChatScreenConversations on _ChatScreenState {
             text: draftToRestore,
             selection: TextSelection.collapsed(offset: draftToRestore.length),
           );
-          this._scheduleComposerDraftSave(draftToRestore);
+          _scheduleComposerDraftSave(draftToRestore);
         });
       }
     } catch (_) {
       if (mounted) {
-        this._setState(() {
+        setState(() {
           _error = 'تعذر إكمال المحادثة. تحقق من اتصال الخادم ثم أعد المحاولة.';
           _status = 'احتفظ RHM بمعرّف الطلب لإعادة المحاولة دون تكرار.';
           final draftToRestore = _prompt.text.trim().isEmpty ? text : _prompt.text;
@@ -432,11 +432,11 @@ extension _ChatScreenConversations on _ChatScreenState {
             text: draftToRestore,
             selection: TextSelection.collapsed(offset: draftToRestore.length),
           );
-          this._scheduleComposerDraftSave(draftToRestore);
+          _scheduleComposerDraftSave(draftToRestore);
         });
       }
     } finally {
-      if (mounted) this._setState(() => _busy = false);
+      if (mounted) setState(() => _busy = false);
     }
   }
 }
