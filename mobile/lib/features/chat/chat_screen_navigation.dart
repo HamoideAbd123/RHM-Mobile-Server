@@ -24,22 +24,22 @@ extension _ChatScreenNavigation on _ChatScreenState {
             onCheckAppUpdates: () => _checkForUpdates(),
             onRefreshProviders: _connectionReady ? _loadProviders : null,
             onProviderChanged: (value) {
-              setState(() {
+              this._setState(() {
                 _preferredProvider = value;
                 _preferredModel = null;
               });
               _persistAppPreferences();
             },
             onModelChanged: (value) {
-              setState(() => _preferredModel = value);
+              this._setState(() => _preferredModel = value);
               _persistAppPreferences();
             },
             onLocaleChanged: (value) {
-              setState(() => _locale = value);
+              this._setState(() => _locale = value);
               _persistAppPreferences();
             },
             onOfflineRecognitionChanged: (value) {
-              setState(() => _offlineRecognition = value);
+              this._setState(() => _offlineRecognition = value);
               _persistAppPreferences();
             },
           ),
@@ -230,7 +230,7 @@ extension _ChatScreenNavigation on _ChatScreenState {
                   ),
                 ],
                 onChanged: (value) {
-                  setState(() {
+                  this._setState(() {
                     _preferredProvider = value;
                     _preferredModel = null;
                   });
@@ -259,7 +259,7 @@ extension _ChatScreenNavigation on _ChatScreenState {
                 onChanged: selectedProvider == null
                     ? null
                     : (value) {
-                        setState(() => _preferredModel = value);
+                        this._setState(() => _preferredModel = value);
                         _persistAppPreferences();
                       },
               ),
@@ -306,7 +306,7 @@ extension _ChatScreenNavigation on _ChatScreenState {
               const SizedBox(height: 4),
               TextField(
                 controller: _conversationSearch,
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) => this._setState(() {}),
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
                   hintText: 'ابحث في عناوين المحادثات',
@@ -317,7 +317,7 @@ extension _ChatScreenNavigation on _ChatScreenState {
                           tooltip: 'مسح البحث',
                           onPressed: () {
                             _conversationSearch.clear();
-                            setState(() {});
+                            this._setState(() {});
                           },
                           icon: const Icon(Icons.close_rounded),
                         ),
