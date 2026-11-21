@@ -4,7 +4,8 @@
 **Repository:** `HamoideAbd123/RHM-Mobile-Server`  
 **Implementation branch:** `bootstrap/update-manager-independent-2026-11-21`  
 **Merged into:** `main` via PR #2  
-**Merge commit:** `927dc2d8708ba951fad90bf845ed871060680ab3`
+**Merge commit:** `927dc2d8708ba951fad90bf845ed871060680ab3`  
+**Post-merge CI:** successful, run #44954608077
 
 ## Objective
 
@@ -58,16 +59,16 @@ The artifact is a **debug APK** with package ID `com.rhm.rhm_mobile.debug`. It i
 
 ## Remaining production gates
 
-- The new public mobile repository currently has no stable GitHub Release: `GET /releases/latest` returned HTTP 404 on 2026-11-21.
+- The public mobile repository currently has no stable GitHub Release: `GET /releases/latest` returned HTTP 404 on 2026-11-21. The merged `main` commit also passed its complete CI pipeline in run #44954608077.
 - The existing production package ID `com.rhm.rhm_mobile` and the exact signing certificate fingerprint must be verified against a trusted installed production APK.
-- The existing signing key must remain in a protected private signing workflow. The cleanup PR #47 removed the previous `.github/workflows/mobile-server-signed-build.yml`; it must be restored or replaced in Core without restoring a Flutter source copy. The old workflow uploaded only an Actions artifact, so publishing a GitHub Release here also requires an authorized cross-repository release credential or a manual upload. Do not generate a replacement keystore or store signing secrets in this public repository.
+- The existing signing key must remain in a protected private signing workflow. Although Core PR #45 merged a signing workflow proposal, a subsequent Core cleanup removed that workflow from the current Core `main`; it must be restored or replaced without restoring a Flutter source copy. The old workflow uploaded only an Actions artifact, so publishing a GitHub Release here also requires an authorized cross-repository release credential or a manual upload. Do not generate a replacement keystore or store signing secrets in this public repository.
 - A signed APK must be published as the release's `app-release.apk` asset with `app-release.apk.sha256`.
 - Huawei Android 10 device tests remain outstanding: interruption/resume on real connectivity, checksum rejection, install-source permission, signature continuity, update-in-place, and preservation of chat history, credentials, preferences and local data.
 - No production version bump, stable GitHub Release or release Tag was created. Creating a tag now would falsely label a debug build as a production phone release.
 
 ## Merge status
 
-The updater implementation was merged into `main` through app-import PR #2 on 2026-11-21 at 22:02:08 UTC. Merge commit: `927dc2d8708ba951fad90bf845ed871060680ab3`. The push and pull-request CI checks on the reconciled PR head both passed: runs #44954292974 and #44954297365.
+The updater implementation was merged into `main` through app-import PR #2 on 2026-11-21 at 22:02:08 UTC. Merge commit: `927dc2d8708ba951fad90bf845ed871060680ab3`. Both push and pull-request CI checks on the reconciled PR head passed (#44954292974 and #44954297365), and the post-merge `main` CI run #44954608077 also passed in full.
 
 
 ## Single-source ownership check
