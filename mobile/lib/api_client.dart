@@ -179,7 +179,7 @@ class RhmApiClient {
     try {
       return jsonDecode(response.body);
     } on FormatException {
-      throw const RhmApiException('أعاد خادم RHM استجابة غير صالحة.');
+      throw const RhmApiException('The RHM server returned an invalid response.');
     }
   }
 
