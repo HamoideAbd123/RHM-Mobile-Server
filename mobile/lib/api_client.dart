@@ -23,14 +23,12 @@ class RhmApiClient {
     String? token,
     String? refreshToken,
     Future<void> Function(String accessToken, String refreshToken)?
-        onCredentialsRotated,
-    Future<void> Function()? onCredentialsInvalidated,
+        this._onCredentialsRotated,
+    Future<void> Function()? this._onCredentialsInvalidated,
     http.Client? httpClient,
   })  : _serverUri = _validateServerUrl(serverUrl),
         _token = _validateToken(token),
         _refreshToken = _validateToken(refreshToken),
-        _onCredentialsRotated = onCredentialsRotated,
-        _onCredentialsInvalidated = onCredentialsInvalidated,
         _http = httpClient ?? http.Client();
 
   final Uri _serverUri;
