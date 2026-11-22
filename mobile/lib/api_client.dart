@@ -114,11 +114,7 @@ class RhmApiClient {
       return response;
     }
 
-    try {
-      await _refreshCredentials();
-    } on RhmApiException {
-      return response;
-    }
+    await _refreshCredentials();
     final retry = http.Request(method, uri)
       ..headers.addAll(headers)
       ..bodyBytes = bodyBytes;
@@ -145,15 +141,20 @@ class RhmApiClient {
       timeout: const Duration(seconds: 20),
     );
     if (response.statusCode != 200) {
-      _token = null;
-      _refreshToken = null;
-      try {
-        await _onCredentialsInvalidated?.call();
-      } catch (_) {
-        // Keep the API failure generic; never expose secure-storage details.
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        _token = null;
+        _refreshToken = null;
+        try {
+          await _onCredentialsInvalidated?.call();
+        } catch (_) {
+          // Keep the API failure generic; never expose secure-storage details.
+        }
+        throw const RhmApiException(
+          'تعذر تجديد اعتماد هذا الجهاز. أعد ربط الهاتف بخادم RHM.',
+        );
       }
-      throw const RhmApiException(
-        'تعذر تجديد اعتماد هذا الجهاز. أعد ربط الهاتف بخادم RHM.',
+      throw RhmApiException(
+        'تعذر تجديد الجلسة بسبب استجابة مؤقتة من الخادم (HTTP ${response.statusCode}).',
       );
     }
     final data = _decode(response);
