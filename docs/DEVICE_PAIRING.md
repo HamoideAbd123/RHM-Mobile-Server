@@ -16,7 +16,9 @@ The owner approval code is valid for 10 minutes and is one-time. The app stores 
 
 The app sends a 15-minute access credential. When it expires, the client rotates its 30-day refresh credential automatically and stores the replacement. The master server token is not copied into the app during this pairing flow.
 
-The private Ed25519 key is stored in Flutter secure storage backed by Android Keystore. The server stores only the corresponding public key. Re-pairing an active identity replaces its previous session. If the device identity was revoked, the app offers to generate a new identity.
+The private Ed25519 key is stored in Flutter secure storage backed by Android Keystore. The server stores only the corresponding public key. Re-pairing an active identity replaces its previous sessions. If the device identity was revoked, the app offers to generate a new identity.
+
+Foreground API calls and WorkManager notification polling use separate device sessions. The app creates the background session through the authenticated `/mobile/auth/background-session` route. This prevents two independent clients from rotating the same one-time refresh token.
 
 ## Revocation
 
