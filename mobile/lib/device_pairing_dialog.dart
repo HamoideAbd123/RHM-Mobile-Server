@@ -133,6 +133,10 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
         keyPair = await _algorithm.newKeyPair();
         final keyData = await keyPair.extract();
         final publicKeyData = await keyPair.extractPublicKey();
+        if (keyData is! SimpleKeyPairData ||
+            publicKeyData is! SimplePublicKey) {
+          throw const RhmApiException('تعذر استخراج هوية Ed25519 لهذا الهاتف.');
+        }
         privateSeed = _encodeUrlSafe(keyData.bytes);
         publicKey = _encodeUrlSafe(publicKeyData.bytes);
       }
