@@ -3,8 +3,8 @@
 ## Connection
 
 - Base URL for the current same-device profile: `http://127.0.0.1:8000`.
-- Authentication: `Authorization: Bearer <RHM_API_TOKEN>` for protected routes.
-- The token is entered by the user and saved by the app in Android secure storage.
+- Legacy authentication remains supported with `Authorization: Bearer <RHM_API_TOKEN>`.
+- New device pairing issues a device-specific bearer access credential and rotating refresh credential; the master token is not stored by the Flutter client after successful pairing.
 - Backend loopback restrictions and authentication remain authoritative. The mobile app must not bypass them.
 
 ## Current mobile feature routes
@@ -14,6 +14,10 @@ The Flutter client uses the existing backend operations for:
 | Capability | API surface |
 |---|---|
 | Connection readiness | `GET /mobile/health` |
+| Pairing request | `POST /mobile/pairing/requests` (loopback-only; no master bearer token) |
+| Pairing completion | `POST /mobile/pairing/requests/{id}/complete` (one-time secret + Ed25519 proof) |
+| Device session refresh | `POST /mobile/auth/refresh` (loopback-only; rotating refresh credential) |
+| Background notification session | `POST /mobile/auth/background-session` (authenticated primary device session; isolated refresh lifecycle) |
 | Legacy/simple chat path | `POST /mobile/chat` |
 | Persistent conversations | `GET/POST /conversations`, `PATCH/DELETE /conversations/{id}` |
 | Conversation messages | `GET/POST /conversations/{id}/messages` |
@@ -43,4 +47,4 @@ For app releases, the updater validates the declared APK size, validates the che
 
 ## Transport boundary
 
-HTTP is allowed only for the same-device loopback profile. Do not reuse the URL on Wi-Fi or the public Internet. A remote profile requires HTTPS, secure session/device identity, authorization scoping, replay protection where applicable, and a separate security review.
+HTTP is allowed only for the same-device loopback profile. Pairing and refresh bootstrap routes are loopback-only and do not enable LAN/public pairing. Do not reuse the URL on Wi-Fi or the public Internet. A remote profile requires HTTPS, secure session/device identity, authorization scoping, replay protection where applicable, and a separate security review.

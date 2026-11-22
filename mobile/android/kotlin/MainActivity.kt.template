@@ -23,17 +23,12 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "getStatus" -> result.success(RhmRuntimeService.getSnapshot(this))
 
-                    "setHealthToken" -> {
-                        val token = call.arguments as? String
-                        if (token.isNullOrBlank() || !Regex("^[A-Za-z0-9_-]{32,}$").matches(token)) {
-                            result.error("invalid_health_token", "رمز الوصول غير صالح.", null)
-                        } else {
-                            try {
-                                RhmHealthTokenStore.save(this, token)
-                                result.success(null)
-                            } catch (_: Exception) {
-                                result.error("health_token_store_failed", "تعذر حفظ رمز فحص صحة FastAPI في Android Keystore.", null)
-                            }
+                    "clearHealthToken" -> {
+                        try {
+                            RhmHealthTokenStore.clear(this)
+                            result.success(null)
+                        } catch (_: Exception) {
+                            result.error("health_token_clear_failed", "تعذر مسح رمز فحص الصحة القديم.", null)
                         }
                     }
 

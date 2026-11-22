@@ -9,6 +9,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../api_client.dart';
+import '../../device_pairing_dialog.dart';
 import '../../app_version_footer.dart';
 import '../../conversation/chat_composer.dart';
 import '../../conversation/chat_message_bubble.dart';
@@ -57,6 +58,11 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   static const _serverKey = 'rhm_server_url';
   static const _tokenKey = 'rhm_mobile_token';
+  static const _deviceAccessTokenKey = 'rhm_device_access_token';
+  static const _deviceRefreshTokenKey = 'rhm_device_refresh_token';
+  static const _deviceIdKey = 'rhm_device_id';
+  static const _devicePrivateKeyKey = 'rhm_device_private_key_seed';
+  static const _devicePublicKeyKey = 'rhm_device_public_key';
   static const _providerPreferenceKey = 'rhm_preferred_provider';
   static const _modelPreferenceKey = 'rhm_preferred_model';
   static const _voiceLocalePreferenceKey = 'rhm_voice_locale';

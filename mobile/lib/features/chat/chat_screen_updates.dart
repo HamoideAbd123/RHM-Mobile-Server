@@ -204,12 +204,12 @@ extension _ChatScreenUpdates on _ChatScreenState {
     }
   }
 
-  Future<void> _syncAndroidHealthToken(String token) async {
+  Future<void> _clearAndroidHealthToken() async {
     try {
-      await RhmAndroidRuntimeBridge().setHealthToken(token);
+      await RhmAndroidRuntimeBridge().clearHealthToken();
     } catch (_) {
-      // The primary Flutter secure-storage credential remains authoritative.
-      // Native health monitoring will show token_missing until synchronization works.
+      // The Android host now checks only local server liveness via /health.
+      // Flutter remains responsible for authenticated API requests.
     }
   }
 }

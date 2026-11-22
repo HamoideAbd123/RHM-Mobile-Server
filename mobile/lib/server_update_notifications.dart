@@ -71,14 +71,39 @@ void rhmServerUpdateCallbackDispatcher() {
         ),
       );
       final serverUrl = await storage.read(key: 'rhm_server_url');
-      final token = await storage.read(key: 'rhm_mobile_token');
+      final workerAccess = await storage.read(
+        key: 'rhm_device_worker_access_token',
+      );
+      final workerRefresh = await storage.read(
+        key: 'rhm_device_worker_refresh_token',
+      );
+      final legacyToken = await storage.read(key: 'rhm_mobile_token');
+      final token = workerAccess ?? legacyToken;
       if (serverUrl == null ||
-          token == null ||
           serverUrl.trim().isEmpty ||
-          token.trim().isEmpty) {
+          ((token == null || token.trim().isEmpty) &&
+              (workerRefresh == null || workerRefresh.isEmpty))) {
         return true;
       }
-      final api = RhmApiClient(serverUrl: serverUrl, token: token);
+      final api = RhmApiClient(
+        serverUrl: serverUrl,
+        token: token,
+        refreshToken: workerRefresh,
+        onCredentialsRotated: (access, refresh) async {
+          await storage.write(
+            key: 'rhm_device_worker_access_token',
+            value: access,
+          );
+          await storage.write(
+            key: 'rhm_device_worker_refresh_token',
+            value: refresh,
+          );
+        },
+        onCredentialsInvalidated: () async {
+          await storage.delete(key: 'rhm_device_worker_access_token');
+          await storage.delete(key: 'rhm_device_worker_refresh_token');
+        },
+      );
       try {
         await RhmServerUpdateNotifications.instance.poll(api);
       } finally {
