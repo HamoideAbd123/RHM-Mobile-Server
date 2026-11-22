@@ -32,26 +32,6 @@ class MainActivity : FlutterActivity() {
                         }
                     }
 
-                    "setHealthCredentials" -> {
-                        val credentials = call.arguments as? Map<*, *>
-                        val accessToken = credentials?.get("accessToken") as? String
-                        val refreshToken = credentials?.get("refreshToken") as? String
-                        if (accessToken.isNullOrBlank() ||
-                            refreshToken.isNullOrBlank() ||
-                            !Regex("^[A-Za-z0-9_-]{32,}$").matches(accessToken) ||
-                            !Regex("^[A-Za-z0-9_-]{32,}$").matches(refreshToken)
-                        ) {
-                            result.error("invalid_health_credentials", "اعتماد الجهاز غير صالح.", null)
-                        } else {
-                            try {
-                                RhmHealthTokenStore.save(this, accessToken, refreshToken)
-                                result.success(null)
-                            } catch (_: Exception) {
-                                result.error("health_credentials_store_failed", "تعذر حفظ اعتماد الجهاز في Android Keystore.", null)
-                            }
-                        }
-                    }
-
                     "startBackend" -> runTermuxAction("start", result)
                     "stopBackend" -> runTermuxAction("stop", result)
                     "restartBackend" -> runTermuxAction("restart", result)
