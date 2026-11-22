@@ -332,12 +332,18 @@ extension _ChatScreenConnection on _ChatScreenState {
 
 
   Future<void> _ensureBackgroundSession(RhmApiClient api) async {
-    final existingAccess = await _ChatScreenState._storage.read(
-      key: 'rhm_device_worker_access_token',
-    );
-    final existingRefresh = await _ChatScreenState._storage.read(
-      key: 'rhm_device_worker_refresh_token',
-    );
+    String? existingAccess;
+    String? existingRefresh;
+    try {
+      existingAccess = await _ChatScreenState._storage.read(
+        key: 'rhm_device_worker_access_token',
+      );
+      existingRefresh = await _ChatScreenState._storage.read(
+        key: 'rhm_device_worker_refresh_token',
+      );
+    } catch (_) {
+      return;
+    }
     if (existingAccess != null &&
         existingAccess.isNotEmpty &&
         existingRefresh != null &&
