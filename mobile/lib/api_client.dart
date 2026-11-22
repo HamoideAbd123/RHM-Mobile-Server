@@ -18,7 +18,6 @@ part 'api_client/device_pairing.dart';
 class RhmApiClient {
   static const defaultServerUrl = 'http://127.0.0.1:8000';
 
-  // ignore: prefer_initializing_formals
   RhmApiClient({
     required String serverUrl,
     String? token,
@@ -30,7 +29,9 @@ class RhmApiClient {
   })  : _serverUri = _validateServerUrl(serverUrl),
         _token = _validateToken(token),
         _refreshToken = _validateToken(refreshToken),
+        // ignore: prefer_initializing_formals
         _onCredentialsRotated = onCredentialsRotated,
+        // ignore: prefer_initializing_formals
         _onCredentialsInvalidated = onCredentialsInvalidated,
         _http = httpClient ?? http.Client();
 
