@@ -66,6 +66,9 @@ extension _ChatScreenConnection on _ChatScreenState {
     try {
       await api.checkConnection();
       await _clearAndroidHealthToken();
+      if (deviceRefreshToken != null) {
+        await _ensureBackgroundSession(api);
+      }
       if (!mounted) return;
       _setState(() => _connectionReady = true);
       await RhmServerUpdateNotifications.instance.prime(api);
@@ -118,6 +121,10 @@ extension _ChatScreenConnection on _ChatScreenState {
     try {
       await api.checkConnection();
       await _clearAndroidHealthToken();
+      final refreshToken = await _ChatScreenState._storage.read(
+        key: _ChatScreenState._deviceRefreshTokenKey,
+      );
+      if (refreshToken != null) await _ensureBackgroundSession(api);
       if (!mounted) return;
       _setState(() {
         _connectionReady = true;
@@ -279,6 +286,8 @@ extension _ChatScreenConnection on _ChatScreenState {
           _ChatScreenState._deviceIdKey,
           _ChatScreenState._devicePrivateKeyKey,
           _ChatScreenState._devicePublicKeyKey,
+          'rhm_device_worker_access_token',
+          'rhm_device_worker_refresh_token',
         ]) {
           await _ChatScreenState._storage.delete(key: key);
         }
@@ -321,6 +330,35 @@ extension _ChatScreenConnection on _ChatScreenState {
     }
   }
 
+
+  Future<void> _ensureBackgroundSession(RhmApiClient api) async {
+    final existingAccess = await _ChatScreenState._storage.read(
+      key: 'rhm_device_worker_access_token',
+    );
+    final existingRefresh = await _ChatScreenState._storage.read(
+      key: 'rhm_device_worker_refresh_token',
+    );
+    if (existingAccess != null &&
+        existingAccess.isNotEmpty &&
+        existingRefresh != null &&
+        existingRefresh.isNotEmpty) {
+      return;
+    }
+    try {
+      final session = await api.createBackgroundDeviceSession();
+      await _ChatScreenState._storage.write(
+        key: 'rhm_device_worker_access_token',
+        value: session['access_token'] as String,
+      );
+      await _ChatScreenState._storage.write(
+        key: 'rhm_device_worker_refresh_token',
+        value: session['refresh_token'] as String,
+      );
+    } catch (_) {
+      // Foreground chat remains usable if the optional background session
+      // cannot be created; the next connection check will retry it.
+    }
+  }
 
   Future<void> _clearDeviceSessionCredentials() async {
     await _ChatScreenState._storage.delete(
@@ -392,6 +430,8 @@ extension _ChatScreenConnection on _ChatScreenState {
         value: publicKey,
       );
       await _ChatScreenState._storage.delete(key: _ChatScreenState._tokenKey);
+      await _ChatScreenState._storage.delete(key: 'rhm_device_worker_access_token');
+      await _ChatScreenState._storage.delete(key: 'rhm_device_worker_refresh_token');
       final previous = _api;
       _api = candidate;
       _activeServerUrl = url;
@@ -404,6 +444,7 @@ extension _ChatScreenConnection on _ChatScreenState {
       }
       previous?.close();
       await _clearAndroidHealthToken();
+      await _ensureBackgroundSession(candidate);
       await _loadProviders();
       await _loadProjects();
       await _restoreConversation();
