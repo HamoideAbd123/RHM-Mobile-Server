@@ -30,7 +30,7 @@ The post-merge run confirms the final merged code builds. It does not prove a pr
 - This updater does not use the saved RHM server URL or RHM bearer token.
 - Flutter tests, static analysis, ARM64 debug build, package identity, manifest permissions and artifact upload passed in [Actions run #44953230929](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44953230929). The uploaded APK is debug-only and is not a production update.
 - Huawei physical-device acceptance, exact installed release certificate comparison and a data-preserving in-place install remain required.
-- GitHub's latest stable release endpoint returned HTTP 404 on 2026-11-21: this repository has no stable release yet. No app version bump, production-signed APK, GitHub release or mobile release tag has been created.
+- No stable GitHub Release, production-signed APK or mobile release tag has been published. The updater therefore correctly reports that no stable release is available. The merged app version is the release candidate `0.1.11+12`, not a published release.
 
 ## Flutter refactor completed on this branch
 
@@ -61,7 +61,7 @@ Detailed references:
 - Merge commit: `927dc2d8708ba951fad90bf845ed871060680ab3`.
 - GitHub Actions on the merged `main` commit completed successfully: [run #44954608077](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44954608077).
 - Passed on that run: Flutter unit/widget tests, static analysis, ARM64 debug APK build, debug package identity verification, Android permission assertions and artifact upload.
-- The current `main` documentation commit is `c4a4da30e049844dfff04d377b0721a3182cf214`.
+- The current status documentation commit is `c96dcce298dbcbab6b4235e0096e206d1b62278d`.
 - Core cleanup PR #47 removed the duplicate Flutter source. A fresh check confirmed `mobile/pubspec.yaml` is absent from Core `main`; the canonical Flutter source is this repository.
 
 ## Remaining acceptance gates
