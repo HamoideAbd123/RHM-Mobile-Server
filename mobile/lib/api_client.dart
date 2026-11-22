@@ -147,7 +147,11 @@ class RhmApiClient {
     if (response.statusCode != 200) {
       _token = null;
       _refreshToken = null;
-      await _onCredentialsInvalidated?.call();
+      try {
+        await _onCredentialsInvalidated?.call();
+      } catch (_) {
+        // Keep the API failure generic; never expose secure-storage details.
+      }
       throw const RhmApiException(
         'تعذر تجديد اعتماد هذا الجهاز. أعد ربط الهاتف بخادم RHM.',
       );
@@ -162,7 +166,13 @@ class RhmApiClient {
     final nextRefresh = _validateToken(data['refresh_token'] as String)!;
     _token = access;
     _refreshToken = nextRefresh;
-    await _onCredentialsRotated?.call(access, nextRefresh);
+    try {
+      await _onCredentialsRotated?.call(access, nextRefresh);
+    } catch (_) {
+      throw const RhmApiException(
+        'تم تجديد الاعتماد لكن تعذر حفظه في التخزين الآمن. افتح إعدادات الاتصال قبل إغلاق التطبيق.',
+      );
+    }
   }
 
   Object? _decode(http.Response response) {
