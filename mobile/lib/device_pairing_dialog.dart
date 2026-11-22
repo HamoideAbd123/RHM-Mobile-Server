@@ -254,6 +254,17 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
     }
   }
 
+  Future<void> _restartPairingRequest() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+      _status = 'جارٍ إنشاء طلب ربط جديد…';
+    });
+    await _clearPending();
+    if (!mounted) return;
+    await _beginPairing();
+  }
+
   Future<void> _resetRevokedIdentity() async {
     setState(() {
       _busy = true;
@@ -346,6 +357,12 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
           TextButton(
             onPressed: _busy ? null : _resetRevokedIdentity,
             child: const Text('إنشاء هوية جديدة'),
+          ),
+        if (_error?.toLowerCase().contains('expired') == true ||
+            _error?.toLowerCase().contains('already been used') == true)
+          TextButton(
+            onPressed: _busy ? null : _restartPairingRequest,
+            child: const Text('إنشاء طلب ربط جديد'),
           ),
         TextButton(
           onPressed: _busy ? null : () => Navigator.of(context).pop(false),
