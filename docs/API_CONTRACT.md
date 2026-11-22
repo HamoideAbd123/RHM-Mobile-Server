@@ -17,6 +17,7 @@ The Flutter client uses the existing backend operations for:
 | Pairing request | `POST /mobile/pairing/requests` (loopback-only; no master bearer token) |
 | Pairing completion | `POST /mobile/pairing/requests/{id}/complete` (one-time secret + Ed25519 proof) |
 | Device session refresh | `POST /mobile/auth/refresh` (loopback-only; rotating refresh credential) |
+| Background notification session | `POST /mobile/auth/background-session` (authenticated primary device session; isolated refresh lifecycle) |
 | Legacy/simple chat path | `POST /mobile/chat` |
 | Persistent conversations | `GET/POST /conversations`, `PATCH/DELETE /conversations/{id}` |
 | Conversation messages | `GET/POST /conversations/{id}/messages` |
