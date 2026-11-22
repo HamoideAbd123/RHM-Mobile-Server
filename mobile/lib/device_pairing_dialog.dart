@@ -358,8 +358,7 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
             onPressed: _busy ? null : _resetRevokedIdentity,
             child: const Text('إنشاء هوية جديدة'),
           ),
-        if (_error?.toLowerCase().contains('expired') == true ||
-            _error?.toLowerCase().contains('already been used') == true)
+        if (_request != null && _error != null)
           TextButton(
             onPressed: _busy ? null : _restartPairingRequest,
             child: const Text('إنشاء طلب ربط جديد'),
