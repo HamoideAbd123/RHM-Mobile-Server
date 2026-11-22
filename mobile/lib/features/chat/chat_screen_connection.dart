@@ -117,13 +117,6 @@ extension _ChatScreenConnection on _ChatScreenState {
     });
     try {
       await api.checkConnection();
-      final deviceAccess = await _ChatScreenState._storage.read(
-        key: _ChatScreenState._deviceAccessTokenKey,
-      );
-      final deviceRefresh = await _ChatScreenState._storage.read(
-        key: _ChatScreenState._deviceRefreshTokenKey,
-      );
-      final savedToken = await _ChatScreenState._storage.read(key: _ChatScreenState._tokenKey);
       await _clearAndroidHealthToken();
       if (!mounted) return;
       _setState(() {
