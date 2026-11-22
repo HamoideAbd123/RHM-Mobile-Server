@@ -67,10 +67,8 @@ extension RhmDevicePairingApi on RhmApiClient {
     }
     return data;
   }
-}
 
-
-  Future<Map<String, dynamic>> createBackgroundDeviceSession() async {
+Future<Map<String, dynamic>> createBackgroundDeviceSession() async {
     final request = http.Request(
       'POST',
       _endpoint('mobile/auth/background-session'),
@@ -95,3 +93,4 @@ extension RhmDevicePairingApi on RhmApiClient {
     }
     return data;
   }
+}
