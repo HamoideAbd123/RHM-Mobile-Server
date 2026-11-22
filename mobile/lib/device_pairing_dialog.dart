@@ -301,7 +301,7 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
               ),
             if (code != null) ...[
               const Text(
-                'اعرض رمز الربط أو انسخه، ثم افتح Termux ونفّذ الأمر التالي:',
+                'اعرض رمز الربط أو انسخه، ثم افتح Termux من داخل بيئة مشروع RHM ونفّذ الأمر التالي:',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
@@ -331,7 +331,7 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
                 label: const Text('نسخ رمز الربط'),
               ),
               const Text(
-                'أدخل الرمز في Termux عند طلبه. الرمز صالح لمدة 10 دقائق ويُستخدم مرة واحدة.',
+                'تأكد من تفعيل البيئة الافتراضية للمشروع أولًا، ثم أدخل الرمز عند طلبه. الرمز صالح لمدة 10 دقائق ويُستخدم مرة واحدة.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
