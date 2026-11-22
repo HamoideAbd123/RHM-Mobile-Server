@@ -224,4 +224,126 @@ void main() {
     expect(snapshot.frontend, isNull);
   });
 
+  test('refreshes an expired device access token once and persists rotation', () async {
+    const expiredAccess = 'rhm_expired_access_token_that_is_long_enough_123456';
+    const currentRefresh = 'rhm_current_refresh_token_that_is_long_enough_123456';
+    const nextAccess = 'rhm_next_access_token_that_is_long_enough_123456789';
+    const nextRefresh = 'rhm_next_refresh_token_that_is_long_enough_123456789';
+    var healthCalls = 0;
+    var savedAccess = '';
+    var savedRefresh = '';
+    final client = RhmApiClient(
+      serverUrl: 'http://127.0.0.1:8000',
+      token: expiredAccess,
+      refreshToken: currentRefresh,
+      onCredentialsRotated: (access, refresh) async {
+        savedAccess = access;
+        savedRefresh = refresh;
+      },
+      httpClient: MockClient((request) async {
+        if (request.url.path == '/mobile/auth/refresh') {
+          expect(request.headers.containsKey('authorization'), isFalse);
+          expect(jsonDecode(request.body), {'refresh_token': currentRefresh});
+          return http.Response(
+            jsonEncode({
+              'access_token': nextAccess,
+              'refresh_token': nextRefresh,
+            }),
+            200,
+          );
+        }
+        healthCalls++;
+        if (healthCalls == 1) {
+          expect(request.headers['authorization'], 'Bearer $expiredAccess');
+          return http.Response('{"detail":"expired"}', 401);
+        }
+        expect(request.headers['authorization'], 'Bearer $nextAccess');
+        return http.Response('{"status":"ok"}', 200);
+      }),
+    );
+
+    await client.checkConnection();
+    expect(healthCalls, 2);
+    expect(savedAccess, nextAccess);
+    expect(savedRefresh, nextRefresh);
+    expect(client.accessToken, nextAccess);
+    client.close();
+  });
+
+  test('clears persisted credentials when refresh is rejected', () async {
+    const access = 'rhm_expired_access_token_that_is_long_enough_123456';
+    const refresh = 'rhm_expired_refresh_token_that_is_long_enough_123456';
+    var invalidated = false;
+    final client = RhmApiClient(
+      serverUrl: 'http://127.0.0.1:8000',
+      token: access,
+      refreshToken: refresh,
+      onCredentialsInvalidated: () async {
+        invalidated = true;
+      },
+      httpClient: MockClient((request) async {
+        if (request.url.path == '/mobile/auth/refresh') {
+          return http.Response('{"detail":"revoked"}', 401);
+        }
+        return http.Response('{"detail":"expired"}', 401);
+      }),
+    );
+
+    await expectLater(client.checkConnection(), throwsA(isA<RhmApiException>()));
+    expect(invalidated, isTrue);
+    expect(client.accessToken, isNull);
+    client.close();
+  });
+
+  test('creates a pairing request without sending a bearer token', () async {
+    final client = RhmApiClient(
+      serverUrl: 'http://127.0.0.1:8000',
+      httpClient: MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/mobile/pairing/requests');
+        expect(request.headers.containsKey('authorization'), isFalse);
+        expect(jsonDecode(request.body), {
+          'name': 'RHM Android phone',
+          'public_key': 'A' * 43,
+        });
+        return http.Response(
+          jsonEncode({
+            'request_id': '11111111-1111-4111-8111-111111111111',
+            'pairing_code': 'pair_code_123',
+            'pairing_secret': 'pairing_secret_that_is_long_enough_123456',
+            'challenge': 'challenge_value',
+            'expires_at': '2026-11-22T00:00:00+00:00',
+          }),
+          201,
+        );
+      }),
+    );
+
+    final request = await client.createDevicePairingRequest(
+      name: 'RHM Android phone',
+      publicKey: 'A' * 43,
+    );
+    expect(request['pairing_code'], 'pair_code_123');
+    client.close();
+  });
+
+  test('returns pending state while owner approval is outstanding', () async {
+    final client = RhmApiClient(
+      serverUrl: 'http://127.0.0.1:8000',
+      httpClient: MockClient((request) async {
+        expect(request.url.path, endsWith('/complete'));
+        expect(request.headers.containsKey('authorization'), isFalse);
+        return http.Response('{"detail":"Waiting for owner approval"}', 202);
+      }),
+    );
+
+    final result = await client.completeDevicePairingRequest(
+      requestId: '11111111-1111-4111-8111-111111111111',
+      pairingSecret: 'pairing_secret_that_is_long_enough_123456',
+      signature: 'A' * 86,
+    );
+    expect(result, isNull);
+    client.close();
+  });
+
 }
