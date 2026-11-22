@@ -107,18 +107,6 @@ class RhmAndroidRuntimeBridge {
     }
   }
 
-  Future<void> setHealthToken(String token) async {
-    if (!Platform.isAndroid) return;
-    try {
-      await _channel.invokeMethod<void>('setHealthToken', token);
-    } on PlatformException catch (error) {
-      throw RhmAndroidRuntimeException(
-        error.code,
-        error.message ?? 'تعذر مزامنة رمز فحص الصحة إلى Android Keystore.',
-      );
-    }
-  }
-
   Future<void> clearHealthToken() async {
     if (!Platform.isAndroid) return;
     try {
