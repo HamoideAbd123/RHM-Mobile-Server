@@ -283,9 +283,6 @@ extension _ChatScreenConnection on _ChatScreenState {
         for (final key in [
           _ChatScreenState._deviceAccessTokenKey,
           _ChatScreenState._deviceRefreshTokenKey,
-          _ChatScreenState._deviceIdKey,
-          _ChatScreenState._devicePrivateKeyKey,
-          _ChatScreenState._devicePublicKeyKey,
           'rhm_device_worker_access_token',
           'rhm_device_worker_refresh_token',
         ]) {
