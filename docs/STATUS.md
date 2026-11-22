@@ -1,8 +1,9 @@
 # RHM Mobile Server — verified status
 
-**Status date:** 2026-11-21  
-**Work branch:** `main` (updater implementation merged)  
-**Merged app commit:** `927dc2d8708ba951fad90bf845ed871060680ab3`  
+**Status date:** 2026-11-22  
+**Work branch:** `main` (standalone updater merged; release candidate version bump merged)  
+**Updater implementation merge:** `927dc2d8708ba951fad90bf845ed871060680ab3`  
+**Release candidate version commit:** `64b8551b9b50737f9876c0452322ed8ad7102292`  
 **Private core:** `HamoideAbd123/rhm-personal-ai-core` (authoritative backend)  
 **Public mobile:** `HamoideAbd123/RHM-Mobile-Server` (Android/Flutter integration)
 
@@ -22,7 +23,7 @@ Earlier reconciled PR-head runs #44954297365 and #44954292974 also passed the sa
 
 The post-merge run confirms the final merged code builds. It does not prove a production-signed APK or an in-place upgrade of the currently installed app.
 
-## Independent Android app updater — 2026-11-21
+## Independent Android app updater — 2026-11-21/22
 
 - The updater has been moved off the private Core FastAPI proxy and now reads the fixed public mobile repository's GitHub Releases API.
 - The implementation includes exact repository/tag/asset URL validation, streamed APK download, resumable Range requests, cancellation, byte progress, size/APK-header/SHA-256 verification, Android installer handoff, foreground checks, and a best-effort 12-hour WorkManager notification check.
@@ -56,7 +57,7 @@ Detailed references:
 
 ## GitHub review and main CI
 
-- App-import PR #2 was merged on 2026-11-21 at 22:02:08 UTC: https://github.com/HamoideAbd123/RHM-Mobile-Server/pull/2
+- App-import PR #2 was merged on 2026-11-21 at 22:02:08 UTC: https://github.com/HamoideAbd123/RHM-Mobile-Server/pull/2\n- Release-candidate PR #3 was merged on 2026-11-22: https://github.com/HamoideAbd123/RHM-Mobile-Server/pull/3. Its PR-head CI run #44955284229 passed.
 - Merge commit: `927dc2d8708ba951fad90bf845ed871060680ab3`.
 - GitHub Actions on the merged `main` commit completed successfully: [run #44954608077](https://github.com/HamoideAbd123/RHM-Mobile-Server/actions/runs/44954608077).
 - Passed on that run: Flutter unit/widget tests, static analysis, ARM64 debug APK build, debug package identity verification, Android permission assertions and artifact upload.
@@ -79,6 +80,6 @@ Detailed references:
 - Production signing secrets must remain only in the private Core repository.
 - The private signing workflow proposal PR #45 was merged into Core on 2026-11-20, but a subsequent Core cleanup removed the workflow file. A current inspection of Core `main` found no signing workflow, so a protected signing workflow still needs to be restored/replaced there.
 - The public mobile CI currently builds only a debug APK with application ID `com.rhm.rhm_mobile.debug`.
-- The imported app declares release version `0.1.10+11` and intended production application ID `com.rhm.rhm_mobile`; neither the production signer fingerprint nor compatibility with the APK installed on the Huawei phone has yet been verified.
+- The app now declares release candidate version `0.1.11+12`; intended production application ID remains `com.rhm.rhm_mobile`. The production signer fingerprint and compatibility with the APK installed on the Huawei phone have not yet been verified.
 - No stable GitHub Release exists in this mobile repository. The updater correctly reports that no stable release has been published.
 - Do not create a release tag or publish the debug APK as a phone update. A production release requires the original signing identity, verified certificate fingerprint, signed ARM64 APK, SHA-256 sidecar and a successful update-in-place/data-preservation test.
