@@ -34,6 +34,7 @@ extension _ChatScreenConnection on _ChatScreenState {
         ? savedUrl!.trim()
         : RhmApiClient.defaultServerUrl;
     _serverUrl.text = url;
+    await _clearAndroidHealthToken();
     final effectiveToken = deviceAccessToken ?? token;
     if ((effectiveToken == null || effectiveToken.trim().isEmpty) &&
         (deviceRefreshToken == null || deviceRefreshToken.isEmpty)) {
@@ -64,11 +65,7 @@ extension _ChatScreenConnection on _ChatScreenState {
 
     try {
       await api.checkConnection();
-      if (deviceRefreshToken != null && api.accessToken != null) {
-        await _clearAndroidHealthToken();
-      } else if (token != null && token.isNotEmpty) {
-        await _syncAndroidHealthToken(token);
-      }
+      await _clearAndroidHealthToken();
       if (!mounted) return;
       _setState(() => _connectionReady = true);
       await RhmServerUpdateNotifications.instance.prime(api);
@@ -127,11 +124,7 @@ extension _ChatScreenConnection on _ChatScreenState {
         key: _ChatScreenState._deviceRefreshTokenKey,
       );
       final savedToken = await _ChatScreenState._storage.read(key: _ChatScreenState._tokenKey);
-      if (deviceAccess != null && deviceRefresh != null) {
-        await _clearAndroidHealthToken();
-      } else if (savedToken != null && savedToken.isNotEmpty) {
-        await _syncAndroidHealthToken(savedToken);
-      }
+      await _clearAndroidHealthToken();
       if (!mounted) return;
       _setState(() {
         _connectionReady = true;
@@ -296,7 +289,7 @@ extension _ChatScreenConnection on _ChatScreenState {
         ]) {
           await _ChatScreenState._storage.delete(key: key);
         }
-        await _syncAndroidHealthToken(enteredToken);
+        await _clearAndroidHealthToken();
         final previous = _api;
         _api = candidate;
         _activeServerUrl = requestedUrl;
