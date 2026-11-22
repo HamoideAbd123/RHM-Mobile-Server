@@ -52,9 +52,11 @@ extension RhmDevicePairingApi on RhmApiClient {
     );
     if (response.statusCode == 202) return null;
     if (response.statusCode != 200) {
-      throw RhmApiException(
-        'تعذر إكمال ربط الجهاز (HTTP ${response.statusCode}).',
-      );
+      final data = _decode(response);
+      final detail = data is Map<String, dynamic> && data['detail'] is String
+          ? data['detail'] as String
+          : 'HTTP ${response.statusCode}';
+      throw RhmApiException('تعذر إكمال ربط الجهاز: $detail');
     }
     final data = _decode(response);
     if (data is! Map<String, dynamic> ||
