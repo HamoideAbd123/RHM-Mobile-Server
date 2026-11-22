@@ -68,3 +68,30 @@ extension RhmDevicePairingApi on RhmApiClient {
     return data;
   }
 }
+
+
+  Future<Map<String, dynamic>> createBackgroundDeviceSession() async {
+    final request = http.Request(
+      'POST',
+      _endpoint('mobile/auth/background-session'),
+    )
+      ..headers['content-type'] = 'application/json'
+      ..body = jsonEncode({});
+    final response = await _send(
+      request,
+      timeout: const Duration(seconds: 20),
+    );
+    if (response.statusCode != 200) {
+      throw RhmApiException(
+        'تعذر إنشاء جلسة الإشعارات الخلفية (HTTP ${response.statusCode}).',
+      );
+    }
+    final data = _decode(response);
+    if (data is! Map<String, dynamic> ||
+        data['purpose'] != 'background' ||
+        data['access_token'] is! String ||
+        data['refresh_token'] is! String) {
+      throw const RhmApiException('بيانات جلسة الإشعارات الخلفية غير صالحة.');
+    }
+    return data;
+  }
