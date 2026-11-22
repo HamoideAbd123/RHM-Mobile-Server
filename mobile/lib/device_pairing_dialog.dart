@@ -139,7 +139,6 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
           throw const RhmApiException('تعذر استخراج هوية Ed25519 لهذا الهاتف.');
         }
         privateSeed = _encodeUrlSafe(keyData.bytes);
-        keyData.destroy();
         publicKey = _encodeUrlSafe(publicKeyData.bytes);
       }
       final request = await _api!.createDevicePairingRequest(
@@ -261,6 +260,8 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
   }
 
   Future<void> _restartPairingRequest() async {
+    _keyPair?.destroy();
+    _keyPair = null;
     setState(() {
       _busy = true;
       _error = null;
