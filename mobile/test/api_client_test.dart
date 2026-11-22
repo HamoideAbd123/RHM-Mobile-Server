@@ -346,4 +346,34 @@ void main() {
     client.close();
   });
 
+  test('creates a separate authenticated session for background polling', () async {
+    const primary = 'rhm_primary_access_token_that_is_long_enough_123456';
+    const backgroundAccess = 'rhm_background_access_token_that_is_long_enough_123456';
+    const backgroundRefresh = 'rhm_background_refresh_token_that_is_long_enough_123456';
+    final client = RhmApiClient(
+      serverUrl: 'http://127.0.0.1:8000',
+      token: primary,
+      httpClient: MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/mobile/auth/background-session');
+        expect(request.headers['authorization'], 'Bearer $primary');
+        expect(jsonDecode(request.body), isEmpty);
+        return http.Response(
+          jsonEncode({
+            'purpose': 'background',
+            'access_token': backgroundAccess,
+            'refresh_token': backgroundRefresh,
+          }),
+          200,
+        );
+      }),
+    );
+
+    final session = await client.createBackgroundDeviceSession();
+    expect(session['purpose'], 'background');
+    expect(session['access_token'], backgroundAccess);
+    expect(session['refresh_token'], backgroundRefresh);
+    client.close();
+  });
+
 }
