@@ -7,6 +7,7 @@
 - Added Ed25519 proof-of-possession; the private key is held in Android-backed secure storage and the server receives only the public key.
 - Added device-specific 15-minute access credentials and 30-day rotating refresh credentials with replay detection and device revocation.
 - Added automatic access-token refresh and secure persistence of rotated credentials; the app removes the saved legacy master token after successful device pairing.
+- Added an isolated background-notification session so WorkManager and the foreground UI never rotate the same refresh token.
 - Added recovery for expired, consumed or revoked pairing requests and preserved unfinished pairing state across app suspension.
 - Separated Android runtime liveness monitoring from app authentication: the native monitor checks loopback `/health` and does not retain the device refresh credential.
 - Added API-client tests for pairing bootstrap, pending approval, credential rotation and rejected refresh credentials.
