@@ -68,6 +68,7 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
 
   @override
   void dispose() {
+    _keyPair?.destroy();
     _api?.close();
     super.dispose();
   }
@@ -138,6 +139,7 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
           throw const RhmApiException('تعذر استخراج هوية Ed25519 لهذا الهاتف.');
         }
         privateSeed = _encodeUrlSafe(keyData.bytes);
+        keyData.destroy();
         publicKey = _encodeUrlSafe(publicKeyData.bytes);
       }
       final request = await _api!.createDevicePairingRequest(
@@ -270,6 +272,8 @@ class _RhmDevicePairingDialogState extends State<RhmDevicePairingDialog> {
   }
 
   Future<void> _resetRevokedIdentity() async {
+    _keyPair?.destroy();
+    _keyPair = null;
     setState(() {
       _busy = true;
       _error = null;
